@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>크리스마스 어드벤트 마을 — 시제품</title>
+<link rel="stylesheet" href="gaegu.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="webnote" hidden>바탕화면 미리보기 · 실제로는 배경이 투명해요</div>
+
+<div id="taskbar" aria-hidden="true"><i></i><i></i><i></i><i></i><span>가짜 작업표시줄</span></div>
+<div id="stage">
+  <div id="village">
+    <div id="frame" data-hit aria-hidden="true"><i class="sky night"></i><i class="sky eve"></i><i class="sky day"></i><i class="hill h1"></i><i class="hill h2"></i><i class="ground"></i></div>
+    <div id="ext" data-hit aria-hidden="true"></div>
+    <div id="view"><div id="scene"></div></div>
+    <div id="tools">
+      <button type="button" class="tool" id="btnBroom" data-hit title="빗자루 (눈 쓸기)" aria-label="빗자루 (눈 쓸기)" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3 11.500 13"/><path d="M7.500 12.500 13 15.500 11 21.500 4 18.500z"/></svg>
+      </button>
+      <button type="button" class="tool" id="btnFree" data-hit title="언제나 놀이" aria-label="언제나 할 수 있는 놀이 (귤 까기 · 드럼통 난로)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13.5" r="7"/><path d="M12 6.5c0-2 1.400-3.300 3.400-3.600M12 6.500c-1.300-1.400-3.200-1.600-4.600-.800"/></svg>
+      </button>
+      <button type="button" class="tool" id="btnSnow" data-hit title="눈사람 만들기" aria-label="눈사람 만들기 (바닥에 쌓인 눈으로)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="3.2"/><circle cx="12" cy="15.5" r="5"/><path d="M9.300 4.600h5.400M10.200 2.600h3.600v2"/></svg>
+      </button>
+      <button type="button" class="tool" id="btnKnit" data-hit title="뜨개질" aria-label="뜨개질"><img src="assets/kn_red.png" alt=""></button>
+      <button type="button" class="tool" id="btnTree" data-hit aria-label="내 트리 꾸미기">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 7.500 9h2.500L6 14.500h3L5 20h14l-4-5.500h3L14 9h2.500z"/><path d="M12 20v2"/></svg>
+      </button>
+      <button type="button" class="tool" id="btnSet" data-hit title="설정" aria-label="설정">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+      </button>
+    </div>
+    <div id="toast" role="status" aria-live="polite"></div>
+  </div>
+</div>
+
+<!-- 오늘의 칸 (선물) -->
+<div class="layer" id="giftLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <p class="daytag" id="giftDay"></p>
+    <div class="sheet gift">
+      <div class="gtop">
+        <div class="gpic"><img id="giftPic" alt=""></div>
+        <div class="gtext">
+          <h2 id="giftTitle"></h2>
+          <div id="giftBody"></div>
+          <p class="from" id="giftFrom"></p>
+        </div>
+      </div>
+      <p class="gnote" id="giftNote" hidden><b>어제의 내가 남긴 한 줄</b><span id="giftNoteText"></span></p>
+      <p class="gorn" id="giftOrn"></p>
+      <div class="gwrite" id="giftWrite">
+        <label for="giftText">내일의 나에게 한 줄</label>
+        <div><input id="giftText" type="text" maxlength="80" placeholder="내일 칸을 열면 함께 나와요" autocomplete="off"><button type="button" id="btnGiftSend">남기기</button></div>
+      </div>
+    </div>
+    <div class="actions"><button type="button" id="btnGiftPlay" class="primary" hidden>해 보기</button><button type="button" id="btnGiftTree">트리 보기</button><button type="button" data-close>닫기</button></div>
+  </div>
+</div>
+
+<!-- 오늘의 놀잇감 -->
+<div class="layer" id="playLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet play">
+      <h2 id="playTitle"></h2>
+      <p class="hint" id="playGuide" aria-live="polite"></p>
+      <div id="playBoard"></div>
+    </div>
+    <div class="actions"><button type="button" id="btnPlayDone" class="primary" disabled>다 했어요</button><button type="button" id="btnPlayAgain">처음부터</button><button type="button" data-close>닫기</button></div>
+  </div>
+</div>
+
+<!-- 뜨개질 -->
+<div class="layer" id="knitLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet knit">
+      <h2>뜨개질</h2>
+      <p class="hint" id="knGuide" aria-live="polite"></p>
+      <div class="knrow"><span class="knlab">무엇을</span><div class="knseg" id="knShapes"></div></div>
+      <div class="knrow"><span class="knlab">도안</span><div class="knseg" id="knGuides"></div><button type="button" id="knLoad" class="knload">도안 불러오기…</button><input type="file" id="knFile" accept="image/*" hidden>
+        <label id="knAutoWrap" class="knauto" hidden><input type="checkbox" id="knAuto" checked> 도안 색 자동</label></div>
+      <div class="knask" id="knAsk" hidden><span id="knAskText"></span> <button type="button" id="knAskYes">새로 시작</button><button type="button" id="knAskNo">그대로 두기</button></div>
+      <div class="knboard"><canvas id="knCanvas"></canvas></div>
+      <div class="knyarn" id="knYarn" role="group" aria-label="실 색"></div>
+      <div class="knshelf" id="knShelfWrap" hidden><span class="knlab">내가 뜬 것</span><div id="knShelf"></div></div>
+    </div>
+    <div class="actions"><button type="button" id="knPlace" class="primary" hidden>트리 곁에 놓기</button><button type="button" id="knMore" hidden>하나 더 뜨기</button><button type="button" id="knOne" class="primary">한 코 뜨기</button><button type="button" id="knUndo">한 코 풀기</button><button type="button" id="knReset">처음부터</button><button type="button" data-close>닫기</button></div>
+  </div>
+</div>
+
+<!-- 뜨개질 손맛 시험판 -->
+<div class="layer" id="knit2Layer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet knit">
+      <h2>뜨개질 <small style="font-weight:400;font-size:12px;color:#8a7868">손맛 시험판 · 그림은 임시</small></h2>
+      <p class="hint">바늘 끝이 마우스를 따라다녀요. <b>① 고리 구멍에 찔러 넣고 → ② 점선 따라 한 바퀴 돌려 실을 감고 → ③ 아래로 당겨 빼고 → ④ 오른쪽으로 밀어 벗겨요.</b> 누를 필요 없이 움직이기만 하면 돼요.</p>
+      <div class="knboard"><canvas id="kn2Canvas" style="width:640px;height:400px;max-width:100%;touch-action:none;cursor:none"></canvas></div>
+      <div class="knyarn" id="kn2Yarn" role="group" aria-label="실 색"></div>
+    </div>
+    <div class="actions"><button type="button" id="kn2Reset">처음부터</button><button type="button" data-close class="primary">닫기</button></div>
+  </div>
+</div>
+
+<!-- 눈사람 꾸미기 -->
+<div class="layer" id="snowLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet narrow">
+      <h2>눈사람 꾸미기</h2>
+      <p class="hint">아래 재료를 누르면 눈사람에 붙어요. 끌어서 자리를 옮기고, 판 밖으로 끌어내면 떼어져요.</p>
+      <div class="smboard" id="smBoard"></div>
+      <div class="smpal" id="smPal"></div>
+    </div>
+    <div class="actions"><button type="button" data-close class="primary">다 꾸몄어요</button></div>
+  </div>
+</div>
+
+<!-- 내 트리 -->
+<div class="layer" id="treeLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet narrow">
+      <h2>트리 꾸미기 <small id="treeInfo"></small></h2>
+      <p class="hint" id="treeHint"></p>
+      <div class="sizerow" id="sizeRow" hidden><label for="sizeRange">고른 장식 크기</label><input type="range" id="sizeRange" min="0.3" max="1.6" step="0.05" value="1"></div>
+      <div class="treeboard" id="treeBoard"><i class="tground"></i><img class="tbody" src="assets/treeview.jpg" alt="트리"></div>
+    </div>
+    <div class="actions"><button type="button" id="btnTreeMore" hidden>하나 더 만들기</button><button type="button" data-close>닫기</button></div>
+  </div>
+</div>
+
+<!-- 나에게 쓰는 한 줄 (우체통) -->
+<div class="layer" id="chrLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet chred">
+      <h2>캐릭터 다듬기</h2>
+      <p class="hint">남은 배경을 <b>누르면</b> 그 색이 지워져요. 지울 때 넓게/좁게는 아래 막대로 조절해요. 캐릭터가 지워졌으면 "되돌리기".</p>
+      <div class="chrstage"><canvas id="chrCanvas"></canvas></div>
+      <div class="chrctl"><span>좁게</span><input type="range" id="chrTol" min="10" max="120" value="48" aria-label="지우는 정도"><span>넓게</span><button type="button" id="chrUndo">되돌리기</button><button type="button" id="chrAuto">처음부터 자동</button></div>
+    </div>
+    <div class="actions"><button type="button" id="chrOk" class="primary">마을에 보내기</button><button type="button" data-close>취소</button></div>
+  </div>
+</div>
+<div class="layer" id="noteLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet narrow">
+      <h2>내일의 나에게 한 줄</h2>
+      <p class="hint">우체통에 넣어 두면, 내일 칸을 열 때 선물과 함께 나와요.</p>
+      <textarea id="noteText" maxlength="80" rows="3" placeholder="내일의 나에게 한마디"></textarea>
+    </div>
+    <div class="actions"><button type="button" id="btnNoteSend" class="primary">우체통에 넣기</button><button type="button" data-close>닫기</button></div>
+  </div>
+</div>
+
+<!-- 이야기 편지 -->
+<div class="layer" id="letterLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet letter">
+      <div class="pcflip" id="letCard" role="button" tabindex="0" aria-label="엽서 뒤집기">
+        <div class="pcin">
+          <div class="pcf pcfront"><img id="letFront" alt="엽서 그림"></div>
+          <div class="pcf pcback">
+            <div class="letbody" id="letBody"></div>
+            <div class="pcaddr"><img id="letPic" alt=""><span class="l1">받는 사람 · 나</span><span class="l2" id="letDay"></span><span class="l3">보낸 사람 · <b id="letFrom"></b></span></div>
+          </div>
+        </div>
+      </div>
+      <p class="pchint" id="letHint">엽서를 눌러 뒤집어 보세요</p>
+      <div class="letnav"><button type="button" id="letPrev" aria-label="이전 편지">◀</button><span id="letCount"></span><button type="button" id="letNext" aria-label="다음 편지">▶</button></div>
+    </div>
+    <div class="actions"><button type="button" data-close class="primary">닫기</button></div>
+  </div>
+</div>
+
+<!-- 24일 밤: 산타 할아버지께 쿠키 두기 -->
+<div class="layer" id="santaLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet santa">
+      <h3>산타 할아버지께 드릴 쿠키</h3>
+      <p class="santahint" id="santaHint">내가 구운 쿠키를 눌러 접시에 올려요. 우유도 한 잔 따라 두면 좋아요.</p>
+      <canvas id="santaCv" width="760" height="420"></canvas>
+      <div class="santarow" id="santaRow"></div>
+      <input type="text" id="santaNote" maxlength="40" placeholder="산타 할아버지께 남길 한마디 (40자까지)">
+    </div>
+    <div class="actions"><button type="button" data-close>나중에</button><button type="button" class="primary" id="btnSanta" disabled>트리 곁에 두고 자러 가기</button></div>
+  </div>
+</div>
+
+<!-- 우체통: 엽서·친구 -->
+<div class="layer" id="mailLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet narrow mailbox">
+      <h2>우체통</h2>
+      <div class="mbtabs" role="tablist"><button type="button" data-tab="post" class="on">엽서</button><button type="button" data-tab="friends">친구</button></div>
+      <div class="mbpane" data-pane="post">
+        <button type="button" class="mbbig" id="btnLetters"><img src="assets/pp_mail.png" alt="" class="round"><span><b>이야기 편지</b><small id="letCountBox">마을 사람들이 보낸 편지</small></span></button>
+        <button type="button" class="mbbig" id="btnPcWrite"><img src="assets/postcard.jpg" alt=""><span><b>엽서 쓰기</b><small>친구에게 그림 엽서를 보내요</small></span></button>
+        <button type="button" class="mbbig" id="btnPcBox"><span class="mbstack"><i></i><i></i><i></i></span><span><b>엽서 상자</b><small id="pcBoxCount">받은 엽서가 아직 없어요</small></span></button>
+        <button type="button" class="mbbig small" id="btnNoteOpen"><span><b>내일의 나에게 한 줄</b><small>내일 칸을 열면 함께 나와요</small></span></button>
+      </div>
+      <div class="mbpane" data-pane="friends" hidden>
+        <div class="mycode"><span>내 친구 코드</span><b id="myCode"></b><button type="button" id="btnCopyCode">카톡으로 보낼 글 복사</button></div>
+        <p class="hint small">친구가 이 코드를 자기 마을에 등록하면, 친구가 나에게 엽서를 보낼 수 있어요.</p>
+        <div class="flist" id="friendList"></div>
+        <div class="fadd" id="friendAdd">
+          <h3>친구 등록</h3>
+          <label>친구 코드<input id="fCode" type="text" maxlength="9" placeholder="예) SNOW-4K2P" autocomplete="off" spellcheck="false"></label>
+          <label>별명<input id="fName" type="text" maxlength="10" placeholder="내가 부를 이름" autocomplete="off"></label>
+          <div class="fchr"><span>캐릭터</span><div id="fChrPick"></div><button type="button" id="btnFChrImg">그림 넣기</button><input type="file" id="fChrFile" accept="image/*" hidden></div>
+          <p class="ferr" id="fErr" aria-live="polite"></p><p class="fok" id="fOk" aria-live="polite"></p>
+          <button type="button" id="btnFAdd" class="addbtn">마을에 초대하기</button>
+        </div>
+      </div>
+    </div>
+    <div class="actions"><button type="button" data-close>닫기</button></div>
+  </div>
+</div>
+
+<!-- 엽서 쓰기 -->
+<div class="layer center" id="pcWriteLayer" hidden data-hit>
+  <div class="panel-wrap wide">
+    <div class="sheet pcw">
+      <h2>엽서 쓰기</h2>
+      <div class="pcto"><span>받는 친구</span><div id="pcToList"></div></div>
+      <div class="pcsides" role="tablist"><button type="button" data-side="front" class="on">① 앞면 그림</button><button type="button" data-side="back">② 뒷면 글</button></div>
+      <div class="pcw-card">
+        <div class="pc-face front" id="pcwFront"><canvas id="pcwCanvas" width="900" height="600"></canvas></div>
+        <div class="pc-face back" id="pcwBack" hidden>
+          <div class="pcb-left"><textarea id="pcwText" maxlength="140" placeholder="여기에 마음을 적어요"></textarea></div>
+          <div class="pcb-right"><span class="pcstamp" id="pcwStamp"></span><p class="pcb-to">To. <span id="pcwToName">친구</span></p><p class="pcb-from">From. 나</p></div>
+        </div>
+      </div>
+      <div class="pcw-tools" id="pcwFrontTools">
+        <div class="pcw-presets" id="pcwPresets"></div>
+        <div class="pcw-draw"><span class="lab">그리기</span><span id="pcwColors"></span><span class="sizes" id="pcwSizes"></span><button type="button" id="pcwUndo">되돌리기</button><button type="button" id="pcwClear">그림 지우기</button></div>
+      </div>
+      <p class="hint pcw-backhint" id="pcwBackTools" hidden>타자로 치면 손글씨처럼 보여요. <span id="pcwLeft">140</span>자까지 쓸 수 있어요.</p>
+    </div>
+    <div class="actions"><button type="button" id="btnPcNext" class="primary">뒷면 쓰기</button><button type="button" id="btnPcSend" class="primary" hidden>보내기</button><button type="button" data-close>닫기</button></div>
+  </div>
+</div>
+
+<!-- 엽서 받기 -->
+<div class="layer center dim" id="pcRecvLayer" hidden data-hit>
+  <div class="pcr-wrap">
+    <div class="pcr-card" id="pcrCard">
+      <div class="pcr-inner" id="pcrInner">
+        <div class="pc-face front"><img id="pcrFront" alt="엽서 앞면"></div>
+        <div class="pc-face back">
+          <div class="pcb-left"><p class="pcr-text" id="pcrText"></p></div>
+          <div class="pcb-right"><span class="pcstamp" id="pcrStamp"></span><p class="pcb-date" id="pcrDate"></p><p class="pcb-from">From. <span id="pcrFrom"></span></p></div>
+        </div>
+      </div>
+    </div>
+    <p class="pcr-hint" id="pcrHint">엽서를 누르면 뒤집혀요</p>
+    <div class="actions"><button type="button" id="btnPcKeep" class="primary">엽서 상자에 넣기</button><button type="button" id="btnPcReply">답장 쓰기</button><button type="button" id="btnPcToss" hidden class="danger">버리기</button></div>
+  </div>
+</div>
+
+<!-- 엽서 상자 -->
+<div class="layer" id="pcBoxLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet narrow">
+      <h2>엽서 상자 <small id="pcBoxN"></small></h2>
+      <div class="pcbox" id="pcBoxGrid"></div>
+    </div>
+    <div class="actions"><button type="button" id="btnBoxBack">우체통으로</button><button type="button" data-close>닫기</button></div>
+  </div>
+</div>
+
+<!-- 시험용: 모든 놀이 한 번에 -->
+<div class="layer" id="testLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet narrow">
+      <h2>놀이 시험장</h2>
+      <p class="hint small">날짜와 상관없이 아무 놀이나 해 볼 수 있어요. 기본은 저장하지 않아요.</p>
+      <label class="tsave"><input type="checkbox" id="testSave"> 다 하면 진짜로 저장하고 트리에 놓기</label>
+      <div class="tlist" id="testList"></div>
+    </div>
+    <div class="actions"><button type="button" data-close>닫기</button></div>
+  </div>
+</div>
+<div class="layer" id="freeLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet narrow">
+      <h2>언제나 놀이</h2>
+      <p class="hint small">날짜와 상관없이 언제든 할 수 있어요.</p>
+      <div class="tlist" id="freeList"></div>
+    </div>
+    <div class="actions"><button type="button" data-close>닫기</button></div>
+  </div>
+</div>
+<!-- 설정 -->
+<div class="layer" id="setLayer" hidden data-hit>
+  <div class="panel-wrap">
+    <div class="sheet narrow">
+      <h2>설정</h2>
+      <div class="row"><span>마을 크기</span>
+        <div class="scalebox"><input type="range" id="scaleRange" min="30" max="100" step="5" aria-label="마을 크기 (화면 폭의 퍼센트)"><output id="scaleOut">100%</output></div></div>
+      <div class="row" id="rowSky"><span>하늘</span>
+        <div class="seg" id="segSky"><button type="button" data-v="0">빼기 (집만)</button><button type="button" data-v="1">넣기</button></div></div>
+      <div class="row" id="rowFull"><span>띠 너비</span>
+        <div class="seg" id="segFull"><button type="button" data-v="1">화면 끝까지</button><button type="button" data-v="0">그림만</button></div></div>
+      <div class="row" id="rowAlign"><span>마을 위치</span>
+        <div class="seg" id="segAlign"><button type="button" data-v="left">왼쪽</button><button type="button" data-v="center">가운데</button><button type="button" data-v="right">오른쪽</button></div></div>
+      <div class="row wrap"><span>날씨</span>
+        <div class="seg" id="segWeather"><button type="button" data-v="clear">맑음</button><button type="button" data-v="snow">눈</button><button type="button" data-v="heavy">함박눈</button><button type="button" data-v="rain">비</button></div></div>
+      <div class="row"><span>마을 뒤 배경 판</span>
+        <div class="seg" id="segFrame"><button type="button" data-v="1">있음</button><button type="button" data-v="0">없음</button></div></div>
+      <div class="row"><span>숫자 표시</span>
+        <div class="seg" id="segNums"><button type="button" data-v="today">열 수 있는 칸만</button><button type="button" data-v="all">모두</button></div></div>
+      <div class="row"><span>움직임 (눈·비·연기)</span>
+        <div class="seg" id="segFx"><button type="button" data-v="0">끔</button><button type="button" data-v="1">켬</button></div></div>
+      <div class="row wrap"><span>시간대 미리보기</span>
+        <div class="seg" id="segTime"><button type="button" data-v="">지금</button><button type="button" data-v="day">낮</button><button type="button" data-v="eve">저녁</button><button type="button" data-v="night">밤</button></div></div>
+      <div class="row desk-only"><span>다른 창 위에 항상 표시</span>
+        <div class="seg" id="segTop"><button type="button" data-v="0">끔</button><button type="button" data-v="1">켬</button></div></div>
+      <div class="row"><span>내 캐릭터</span><div class="chrbox"><span id="chrList"></span><button type="button" id="btnChrAdd">그림 넣기</button><input type="file" id="chrFile" accept="image/*" hidden></div></div>
+      <div class="row"><span>시험용 · 놀이</span><button type="button" id="btnTestAll">모든 놀이 해보기</button></div>
+      <div class="row"><span>시험용 · 엽서</span><button type="button" id="btnFakeMail">엽서 하나 받아 보기</button></div>
+      <div class="row" id="rowNext"><span>시험용 · <b id="nowDay"></b></span><button type="button" id="btnNextDay">하루 넘기기</button></div>
+      <div class="row"><span>처음부터 다시</span><button type="button" id="btnReset" class="danger">진행 지우기</button></div>
+      <div class="row confirm" id="resetConfirm" hidden><span>연 칸과 트리 장식, 남긴 글이 모두 지워져요.</span>
+        <div><button type="button" id="btnResetNo">취소</button> <button type="button" id="btnResetYes" class="danger">지우기</button></div></div>
+      <div class="row desk-only"><span>프로그램</span><button type="button" id="btnQuit">종료</button></div>
+    </div>
+    <div class="actions"><button type="button" data-close>닫기</button></div>
+  </div>
+</div>
+
+<script src="content.js"></script>
+<script src="hitmasks.js"></script>
+<script src="play.js"></script>
+<script src="app.js"></script>
+<script src="knit2.js"></script>
+<script src="snow.js"></script>
+</body>
+</html>
