@@ -620,7 +620,7 @@
     const t0 = performance.now(); let last = t0;
     // 오르골 소리로 '고요한 밤' 첫 소절 (작게)
     try { const AC = new (window.AudioContext || window.webkitAudioContext)(), F = { G4: 392, A4: 440, E4: 329.63, D5: 587.33, B4: 493.88, C5: 523.25 }, N2 = [['G4', .9], ['A4', .3], ['G4', .6], ['E4', 1.6], ['G4', .9], ['A4', .3], ['G4', .6], ['E4', 1.6], ['D5', 1.2], ['D5', .6], ['B4', 1.6], ['C5', 1.2], ['C5', .6], ['G4', 1.8]]; let tt = AC.currentTime + 1.2;
-      for (const [n, d] of N2) { for (const [m, v] of [[2, .035], [4, .012], [8.4, .004]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'sine'; o.frequency.value = F[n] * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0004, tt + 1.8); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + 1.9); } tt += d * .62; } } catch (e) { /* 소리 없음 */ }
+      for (const [n, d] of N2) { for (const [m, v] of [[2, .02], [4, .007], [8.4, .0025]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'sine'; o.frequency.value = F[n] * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0004, tt + 1.8); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + 1.9); } tt += d * .62; } } catch (e) { /* 소리 없음 */ }
     $('#treeHint').textContent = '별이 올라갔어요. 트리에 하나둘 불이 켜져요…';
     (function frame(now) { const T = (now - t0) / 1000, dt = Math.min(.05, (now - last) / 1000); last = now; if (!c.isConnected) return; g.clearRect(0, 0, W, H);
       // 방 불이 살짝 어두워짐 (트리 둘레는 덜 어둡게)
@@ -685,7 +685,7 @@
   function playMusicboxSong() { const k = Object.keys(state.made).find(d => V.days[d] && V.days[d].play === 'musicbox' && state.made[d] && Array.isArray(state.made[d].song) && state.made[d].song.length); if (!k) return false;
     const NOTES = [523, 587, 659, 698, 784, 880, 988, 1047], H = state.made[k].song;
     try { const AC = new (window.AudioContext || window.webkitAudioContext)(); let tt = AC.currentTime + .3; const maxC = Math.max(...H.map(h => Math.floor(h / 8))) + 1;
-      for (let c = 0; c < Math.min(32, maxC); c++) { for (const h of H.filter(x => Math.floor(x / 8) === c)) { const f = NOTES[h % 8]; for (const [m, v] of [[1, .05], [2, .02], [4.2, .007]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'sine'; o.frequency.value = f * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0006, tt + 1.4); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + 1.5); } } tt += .3; } } catch (e) { return false; }
+      for (let c = 0; c < Math.min(32, maxC); c++) { for (const h of H.filter(x => Math.floor(x / 8) === c)) { const f = NOTES[h % 8]; for (const [m, v] of [[1, .028], [2, .011], [4.2, .004]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'sine'; o.frequency.value = f * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0006, tt + 1.4); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + 1.5); } } tt += .3; } } catch (e) { return false; }
     return true; }
   window.__dbgSanta = { open: openSanta, reply: santaReply, song: playMusicboxSong, fin: () => { const gh = document.querySelector('.fghost'); const st = document.querySelector('.fstar'); st && st.remove(); gh.classList.remove('fghost'); celebrate(gh); } };
   const STREET_PLAYS = { snowman: { title: '눈사람 만들기', start(n) { delete state.made[n]; newSnowman(n); } }, star: { title: '별 올리기', start(n) { openTree(25, false, true); } } };
