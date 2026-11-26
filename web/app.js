@@ -608,36 +608,42 @@
       else { st.style.left = ''; st.style.top = ''; st.style.bottom = ''; $('#treeHint').textContent = '조금만 더 위로! 트리 맨 꼭대기 반짝이는 자리에 올려요.'; } });
   }
   function celebrate(starEl) {
-    setTimeout(() => window.__snow && window.__snow.paperShower && window.__snow.paperShower(Math.min(16, (state.paperFlakes || []).length * 3)), 1800);   // 그동안 오린 눈꽃이 한꺼번에 내려요
-    const c = document.createElement('canvas'), r = board.getBoundingClientRect(), W = c.width = Math.round(r.width * 1.5), H = c.height = Math.round(r.height * 1.5), g = c.getContext('2d'); c.className = 'fcv'; board.appendChild(c);
-    const sr = starEl.getBoundingClientRect(), sx = (sr.left + sr.width / 2 - r.left) * 1.5, sy = (sr.top + sr.height / 2 - r.top) * 1.5, baseY = H * .9, half = W * .17;
-    const lights = Array.from({ length: 110 }, (_, i) => { const t = Math.sqrt(Math.random()), y = sy + 30 + (baseY - sy - 30) * t, w = half * t * (.25 + .75 * Math.random()), x = sx + (Math.random() < .5 ? -1 : 1) * w; return { x, y, t, c: ['#ffe9a0', '#ff9a8a', '#a8e0ff', '#c8ffb0', '#ffd0f0'][i % 5], p: Math.random() * 6 }; });
-    const fw = [], glitter = Array.from({ length: 90 }, () => ({ x: Math.random() * W, y: -Math.random() * H, v: 30 + Math.random() * 50, r: 1 + Math.random() * 2.2, p: Math.random() * 6 }));
-    let t0 = performance.now(), last = t0, nextFw = .9;
-    // 징글벨 한 소절
-    try { const AC = new (window.AudioContext || window.webkitAudioContext)(), N = [['E5', .25], ['E5', .25], ['E5', .5], ['E5', .25], ['E5', .25], ['E5', .5], ['E5', .25], ['G5', .25], ['C5', .37], ['D5', .13], ['E5', 1]], F = { C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99 }; let tt = AC.currentTime + .4;
-      for (const [n, d] of N) { for (const [m, v] of [[1, .07], [2, .02]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'triangle'; o.frequency.value = F[n] * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0008, tt + d * 1.6); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + d * 1.7); } tt += d * .9; } } catch (e) { /* 소리 없음 */ }
-    $('#treeHint').textContent = '메리 크리스마스! 별이 올라가자 트리에 불이 켜졌어요. 마을 모두가 고마워해요.';
+    // 25일 마지막 장면: 방 불이 살짝 어두워지고, 별에서 빛이 번지며 꼬마전구가 위에서부터 나선을 따라 켜져요. 큰 글씨·불꽃놀이 대신 조용하고 따뜻하게.
+    board.classList.add('finale'); document.querySelectorAll('.treeboard .orn.sel').forEach(e => e.classList.remove('sel'));
+    setTimeout(() => window.__snow && window.__snow.paperShower && window.__snow.paperShower(Math.min(16, (state.paperFlakes || []).length * 3)), 2600);   // 그동안 오린 눈꽃이 한꺼번에 내려요
+    const c = document.createElement('canvas'), r = board.getBoundingClientRect(), K = 2, W = c.width = Math.round(r.width * K), H = c.height = Math.round(r.height * K), g = c.getContext('2d'); c.className = 'fcv'; board.appendChild(c);
+    const sr = starEl.getBoundingClientRect(), sx = (sr.left + sr.width / 2 - r.left) * K, sy = (sr.top + sr.height / 2 - r.top) * K, baseY = H * .9, half = W * .16;
+    // 트리를 감은 전구 줄(나선). 뒤쪽은 어둡게, 앞쪽은 밝게
+    const bulbs = []; const N = 150; for (let i = 0; i < N; i++) { const t = i / (N - 1), y = sy + H * .06 + (baseY - sy - H * .1) * t, ang = t * Math.PI * 2 * 5.5, w = half * (.12 + .88 * t), x = sx + Math.sin(ang) * w, front = Math.cos(ang); if (front < -.35) continue; bulbs.push({ x, y, t, front, c: i % 7 === 3 ? '#ff9f8a' : i % 7 === 5 ? '#9fd4ff' : '#ffd99a', p: Math.random() * 6 }); }
+    const motes = Array.from({ length: 60 }, () => ({ x: Math.random() * W, y: Math.random() * H, v: 6 + Math.random() * 14, r: .8 + Math.random() * 1.8, p: Math.random() * 6 }));
+    const bokeh = Array.from({ length: 14 }, () => ({ x: Math.random() * W, y: H * (.1 + Math.random() * .8), r: W * (.015 + Math.random() * .03), p: Math.random() * 6, c: ['255,214,150', '255,170,150', '170,210,255'][Math.floor(Math.random() * 3)] }));
+    const t0 = performance.now(); let last = t0;
+    // 오르골 소리로 '고요한 밤' 첫 소절 (작게)
+    try { const AC = new (window.AudioContext || window.webkitAudioContext)(), F = { G4: 392, A4: 440, E4: 329.63, D5: 587.33, B4: 493.88, C5: 523.25 }, N2 = [['G4', .9], ['A4', .3], ['G4', .6], ['E4', 1.6], ['G4', .9], ['A4', .3], ['G4', .6], ['E4', 1.6], ['D5', 1.2], ['D5', .6], ['B4', 1.6], ['C5', 1.2], ['C5', .6], ['G4', 1.8]]; let tt = AC.currentTime + 1.2;
+      for (const [n, d] of N2) { for (const [m, v] of [[2, .035], [4, .012], [8.4, .004]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'sine'; o.frequency.value = F[n] * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0004, tt + 1.8); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + 1.9); } tt += d * .62; } } catch (e) { /* 소리 없음 */ }
+    $('#treeHint').textContent = '별이 올라갔어요. 트리에 하나둘 불이 켜져요…';
     (function frame(now) { const T = (now - t0) / 1000, dt = Math.min(.05, (now - last) / 1000); last = now; if (!c.isConnected) return; g.clearRect(0, 0, W, H);
-      // 별빛 퍼짐
-      const ray = Math.min(1, T / .8); g.save(); g.translate(sx, sy); g.rotate(T * .25); for (let i = 0; i < 12; i++) { g.rotate(Math.PI / 6); const gr = g.createLinearGradient(0, 0, 0, -W * .4 * ray); gr.addColorStop(0, `rgba(255,236,170,${.45 * Math.max(.3, 1 - T / 9)})`); gr.addColorStop(1, 'rgba(255,236,170,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(-8, 0); g.lineTo(0, -W * .4 * ray); g.lineTo(8, 0); g.fill(); } g.restore();
-      const halo = g.createRadialGradient(sx, sy, 2, sx, sy, 90); halo.addColorStop(0, 'rgba(255,245,200,.9)'); halo.addColorStop(1, 'rgba(255,220,140,0)'); g.fillStyle = halo; g.fillRect(sx - 90, sy - 90, 180, 180);
-      // 위에서부터 켜지는 꼬마전구
-      for (const L of lights) { const on = T > .6 + L.t * 2.2; if (!on) continue; const tw = .6 + .4 * Math.sin(T * 4 + L.p), rr = 3.2 * tw; const gl = g.createRadialGradient(L.x, L.y, 0, L.x, L.y, rr * 4); gl.addColorStop(0, L.c); gl.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gl; g.fillRect(L.x - rr * 4, L.y - rr * 4, rr * 8, rr * 8); g.fillStyle = '#fff'; g.beginPath(); g.arc(L.x, L.y, rr * .45, 0, 7); g.fill(); }
-      // 불꽃놀이
-      nextFw -= dt; if (T > 2.6 && T < 12 && nextFw <= 0) { nextFw = .5 + Math.random() * .7; const x = W * (.12 + Math.random() * .76), y = H * (.08 + Math.random() * .25), col = ['#ffd76a', '#ff8fa3', '#9fd8ff', '#c4ff9f'][Math.floor(Math.random() * 4)]; fw.push({ x, y, t: 0, col, n: 26 + Math.floor(Math.random() * 14) }); }
-      for (const f of fw) { f.t += dt; const k = f.t / 1.4; g.globalAlpha = Math.max(0, 1 - k); g.fillStyle = f.col; for (let i = 0; i < f.n; i++) { const a = i / f.n * 6.283, d = Math.sqrt(k) * W * .09, px = f.x + Math.cos(a) * d, py = f.y + Math.sin(a) * d + k * k * 30; g.beginPath(); g.arc(px, py, 2.4 * (1 - k * .5), 0, 7); g.fill(); } g.globalAlpha = 1; }
-      for (let i = fw.length - 1; i >= 0; i--) if (fw[i].t > 1.4) fw.splice(i, 1);
-      // 금빛 반짝이 눈
-      if (T > 1.5) for (const p of glitter) { p.y += p.v * dt; if (p.y > H) { p.y = -10; p.x = Math.random() * W; } g.globalAlpha = .55 + .45 * Math.sin(T * 5 + p.p); g.fillStyle = '#ffe9b0'; g.beginPath(); g.arc(p.x + Math.sin(T + p.p) * 8, p.y, p.r, 0, 7); g.fill(); } g.globalAlpha = 1;
-      // 메리 크리스마스
-      if (T > 3) { const a = Math.min(1, (T - 3) / 1.2); g.globalAlpha = a; g.textAlign = 'center'; g.font = `700 ${Math.round(W * .065)}px "Gowun Batang", serif`; g.lineWidth = 6; g.strokeStyle = 'rgba(60,30,10,.45)'; g.strokeText('메리 크리스마스!', W / 2, H * .2); g.fillStyle = '#fff4d0'; g.fillText('메리 크리스마스!', W / 2, H * .2); g.globalAlpha = 1; }
+      // 방 불이 살짝 어두워짐 (트리 둘레는 덜 어둡게)
+      const dim = Math.min(1, T / 1.6); const vg = g.createRadialGradient(sx, H * .58, W * .08, sx, H * .58, W * .62); vg.addColorStop(0, `rgba(8,12,28,${.18 * dim})`); vg.addColorStop(1, `rgba(8,12,28,${.55 * dim})`); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+      // 흐릿한 빛망울
+      for (const b of bokeh) { const a = Math.min(1, Math.max(0, (T - 2) / 2)) * (.10 + .06 * Math.sin(T * .8 + b.p)); const gr = g.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r); gr.addColorStop(0, `rgba(${b.c},${a})`); gr.addColorStop(1, `rgba(${b.c},0)`); g.fillStyle = gr; g.beginPath(); g.arc(b.x, b.y, b.r, 0, 7); g.fill(); }
+      // 별빛: 은은한 후광과 가는 빛줄기 몇 개
+      const sh = Math.min(1, T / 1.2); const halo = g.createRadialGradient(sx, sy, 2, sx, sy, W * .12); halo.addColorStop(0, `rgba(255,246,210,${.85 * sh})`); halo.addColorStop(.25, `rgba(255,226,150,${.35 * sh})`); halo.addColorStop(1, 'rgba(255,220,140,0)'); g.fillStyle = halo; g.beginPath(); g.arc(sx, sy, W * .12, 0, 7); g.fill();
+      g.save(); g.translate(sx, sy); g.rotate(T * .06); for (let i = 0; i < 8; i++) { g.rotate(Math.PI / 4); const len = W * (i % 2 ? .08 : .14) * sh * (.9 + .1 * Math.sin(T * 2 + i)); const gr = g.createLinearGradient(0, 0, 0, -len); gr.addColorStop(0, `rgba(255,240,190,${.5 * sh})`); gr.addColorStop(1, 'rgba(255,240,190,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(-1.5 * K, 0); g.lineTo(0, -len); g.lineTo(1.5 * K, 0); g.fill(); } g.restore();
+      // 위에서부터 차례로 켜지는 전구
+      for (const L of bulbs) { const on = T - (1.2 + L.t * 3.2); if (on <= 0) continue; const k = Math.min(1, on / .35), tw = .78 + .22 * Math.sin(T * 2.4 + L.p), lum = (.45 + .55 * Math.max(0, L.front)) * k * tw, rr = 9 * K * (.6 + .4 * Math.max(0, L.front));
+        const gl = g.createRadialGradient(L.x, L.y, 0, L.x, L.y, rr); gl.addColorStop(0, L.c); gl.addColorStop(.25, L.c); gl.addColorStop(1, 'rgba(255,220,160,0)'); g.globalAlpha = lum * .55; g.fillStyle = gl; g.beginPath(); g.arc(L.x, L.y, rr, 0, 7); g.fill();
+        g.globalAlpha = lum; g.fillStyle = '#fffaf0'; g.beginPath(); g.arc(L.x, L.y, 1.4 * K, 0, 7); g.fill(); } g.globalAlpha = 1;
+      // 공기 중에 떠다니는 작은 금빛 먼지
+      if (T > 2.5) for (const p of motes) { p.y -= p.v * dt * .3; p.x += Math.sin(T * .7 + p.p) * .2; if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; } g.globalAlpha = Math.min(1, (T - 2.5) / 2) * (.25 + .25 * Math.sin(T * 3 + p.p)); g.fillStyle = '#ffe7b0'; g.beginPath(); g.arc(p.x, p.y, p.r * K * .6, 0, 7); g.fill(); } g.globalAlpha = 1;
+      // 아래쪽에 손글씨로 조용히
+      if (T > 5.2) { const a = Math.min(1, (T - 5.2) / 1.6); g.globalAlpha = a; g.textAlign = 'center'; g.shadowColor = 'rgba(255,214,140,.7)'; g.shadowBlur = 14 * K; g.fillStyle = '#fff6e0'; g.font = `${Math.round(W * .042)}px "Gaegu","Gowun Batang",serif`; g.fillText('메리 크리스마스', W * .22, H * .46); g.shadowBlur = 0; g.font = `${Math.round(W * .02)}px "Gowun Batang",serif`; g.fillStyle = 'rgba(255,246,224,.85)'; g.fillText('25일 동안 함께해 줘서 고마워요', W * .22, H * .46 + W * .036); g.globalAlpha = 1; }
       requestAnimationFrame(frame); })(t0);
     state.made[25] = { done: 1 }; save();
-    let i = 0; const lt = setInterval(() => { i++; if (i > 24) { clearInterval(lt); return; } const L = lightEls[i]; if (L) { L.classList.add('pop'); setTimeout(() => L.classList.remove('pop'), 1700); } }, 170);   // 마을 창문 불빛도 차례로 반짝
-    setTimeout(() => { if (playMusicboxSong()) $('#treeHint').textContent = '오르골에서 내가 만든 노래가 흘러나와요. 마을 모두가 귀 기울여요.'; }, 4800);
-    if (state.santa) setTimeout(santaReply, 13000);
-    setTimeout(() => { const w = state.made[24] && state.made[24].text; $('#treeHint').textContent = w ? `어제 단 소원 쪽지가 펼쳐졌어요: “${w}” — 메리 크리스마스!` : '25일 동안 함께해 줘서 고마워요. 메리 크리스마스!'; }, 7000);
+    let i = 0; const lt = setInterval(() => { i++; if (i > 24) { clearInterval(lt); return; } const L = lightEls[i]; if (L) { L.classList.add('pop'); setTimeout(() => L.classList.remove('pop'), 1700); } }, 220);   // 마을 창문 불빛도 차례로 반짝
+    setTimeout(() => { if (playMusicboxSong()) $('#treeHint').textContent = '오르골에서 내가 만든 노래가 흘러나와요. 마을 모두가 귀 기울여요.'; }, 11000);
+    if (state.santa) setTimeout(santaReply, 17000);
+    setTimeout(() => { const w = state.made[24] && state.made[24].text; $('#treeHint').textContent = w ? `어제 단 소원 쪽지가 펼쳐졌어요: “${w}”` : '마을 창문마다 불이 켜졌어요. 메리 크리스마스!'; }, 6500);
   }
   // 실링 왁스로 봉인한 편지를 친구에게: 엽서 앞면에 붙여서 보내요
   function sendSealed(img) {
@@ -679,9 +685,9 @@
   function playMusicboxSong() { const k = Object.keys(state.made).find(d => V.days[d] && V.days[d].play === 'musicbox' && state.made[d] && Array.isArray(state.made[d].song) && state.made[d].song.length); if (!k) return false;
     const NOTES = [523, 587, 659, 698, 784, 880, 988, 1047], H = state.made[k].song;
     try { const AC = new (window.AudioContext || window.webkitAudioContext)(); let tt = AC.currentTime + .3; const maxC = Math.max(...H.map(h => Math.floor(h / 8))) + 1;
-      for (let c = 0; c < Math.min(32, maxC); c++) { for (const h of H.filter(x => Math.floor(x / 8) === c)) { const f = NOTES[h % 8]; for (const [m, v] of [[1, .09], [2, .035], [4.2, .012]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'sine'; o.frequency.value = f * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0006, tt + 1.4); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + 1.5); } } tt += .3; } } catch (e) { return false; }
+      for (let c = 0; c < Math.min(32, maxC); c++) { for (const h of H.filter(x => Math.floor(x / 8) === c)) { const f = NOTES[h % 8]; for (const [m, v] of [[1, .05], [2, .02], [4.2, .007]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'sine'; o.frequency.value = f * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0006, tt + 1.4); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + 1.5); } } tt += .3; } } catch (e) { return false; }
     return true; }
-  window.__dbgSanta = { open: openSanta, reply: santaReply, song: playMusicboxSong };
+  window.__dbgSanta = { open: openSanta, reply: santaReply, song: playMusicboxSong, fin: () => { const gh = document.querySelector('.fghost'); const st = document.querySelector('.fstar'); st && st.remove(); gh.classList.remove('fghost'); celebrate(gh); } };
   const STREET_PLAYS = { snowman: { title: '눈사람 만들기', start(n) { delete state.made[n]; newSnowman(n); } }, star: { title: '별 올리기', start(n) { openTree(25, false, true); } } };
   $('#btnSnow').addEventListener('click', e => {
     e.stopPropagation(); const S = state.snowman;
@@ -1218,8 +1224,12 @@
 
   /* ───────── 설치형: 빈 곳은 클릭이 바탕화면으로 통과 ───────── */
   function solidAt(x, y) {
-    if (layers.some(l => !l.hidden) || document.body.classList.contains('sweeping') || document.body.classList.contains('rolling')) return true;
+    if (document.body.classList.contains('sweeping') || document.body.classList.contains('rolling')) return true;
+    const openL = layers.filter(l => !l.hidden);
+    // 창이 열려 있어도 창 바깥(빈 곳)은 클릭이 뒤의 다른 프로그램으로 통과해요. 그래서 다른 창을 눌러도 열려 있던 창이 닫히지 않아요.
+    if (openL.length) { for (const el of document.elementsFromPoint(x, y)) { if (el.closest('.layer .panel-wrap, .layer.dim, #toast')) return true; } }
     for (const el of document.elementsFromPoint(x, y)) {
+      if (openL.length && el.closest('.layer')) continue;
       if (el.closest('[data-hit]')) return true;
       const sp = el.closest('.sprite'); if (!sp) continue;
       const m = MASK[(sprites[sp.dataset.id] || {}).mask];

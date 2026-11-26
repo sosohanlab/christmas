@@ -252,7 +252,7 @@
         g.clearRect(0, 0, W, H); drawScene(t); drawCup(t);
         if (pouring && cup && ptr) { const c = cupGeo(), ty = cup.t === 'hot' ? c.cy + 10 : c.bot - (c.bot - c.top - 22) * Math.min(1, fill()), col = tool === 'syrup' ? '#4a2614' : '#f8f2e8'; g.strokeStyle = col; g.lineWidth = tool === 'syrup' ? 6 : 11; g.lineCap = 'round'; g.beginPath(); g.moveTo(ptr.x, ptr.y - 40); g.quadraticCurveTo(ptr.x, (ptr.y + ty) / 2, (c.cx || CUPX) + (ptr.x - (c.cx || CUPX)) * .3, ty); g.stroke();
           g.save(); g.translate(ptr.x, ptr.y - 40); g.rotate(-.9); g.fillStyle = tool === 'syrup' ? '#6b3a1e' : tool === 'hotmilk' ? '#d8d2c8' : '#cfe3f0'; g.beginPath(); g.roundRect(-26, -70, 52, 80, 10); g.fill(); g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(-18, -60, 8, 56); g.fillStyle = '#3a2a20'; g.font = '700 12px sans-serif'; g.textAlign = 'center'; g.fillText(tool === 'syrup' ? '초코' : '우유', 0, -26); g.restore(); }
-        if (tool === 'stir' && ptr && cup && spoonI.complete) { g.save(); g.translate(ptr.x, ptr.y); g.rotate(-1.2); g.drawImage(spoonI, -12, -spoonI.naturalHeight * .2, 190, 190 * spoonI.naturalHeight / spoonI.naturalWidth); g.restore(); }
+        if (tool === 'stir' && ptr && cup && spoonI.complete) { const sw = 200, sh = sw * spoonI.naturalHeight / spoonI.naturalWidth; g.save(); g.translate(ptr.x, ptr.y); g.rotate(2.09 + Math.sin(performance.now() / 160) * (stirLast ? .12 : 0)); g.drawImage(spoonI, -sw + 26, -sh / 2, sw, sh); g.restore(); }   // 숟가락 머리는 컵 안, 손잡이는 위로
         for (let i = steam.length - 1; i >= 0; i--) { const s = steam[i]; s.life -= dt * .7; if (s.life <= 0) { steam.splice(i, 1); continue; } s.x += s.vx * dt; s.y += s.vy * dt; if (s.c === 'steam') { g.fillStyle = `rgba(255,255,255,${(s.life * .12).toFixed(3)})`; g.beginPath(); g.arc(s.x + Math.sin(t / 300 + i) * 4, s.y, s.s * (1.6 - s.life * .4), 0, 7); g.fill(); } else { g.fillStyle = s.c; g.globalAlpha = s.life; g.beginPath(); g.arc(s.x, s.y, s.s, 0, 7); g.fill(); g.globalAlpha = 1; } }
         drawOrders(t);
         for (let i = popups.length - 1; i >= 0; i--) { const p = popups[i]; p.t += dt; if (p.t > 1.6) { popups.splice(i, 1); continue; } g.fillStyle = `rgba(255,214,90,${1 - p.t / 1.6})`; g.font = '700 22px "Gowun Batang",serif'; g.textAlign = 'center'; g.fillText(p.s, p.x, p.y - p.t * 40); }
@@ -360,7 +360,7 @@
         if (guard.st === 'run' && hand && on) { g.save(); g.globalAlpha = .35; g.fillStyle = '#f2d7b8'; g.beginPath(); g.ellipse(hand.x, hand.y, 34, 46, (hand.x - 359) * .004, 0, 7); g.fill(); g.restore(); }   // 감싸는 손
         for (let i = gusts.length - 1; i >= 0; i--) { const w = gusts[i]; w.x += w.v * dt; w.life -= dt * .9; if (w.life <= 0 || w.x < -80 || w.x > 880) { gusts.splice(i, 1); continue; } g.strokeStyle = `rgba(255,255,255,${(w.life * .45).toFixed(3)})`; g.lineWidth = 2; g.beginPath(); g.moveTo(w.x, w.y); g.bezierCurveTo(w.x - w.v * .05, w.y - 8, w.x - w.v * .1, w.y + 8, w.x - w.v * .15, w.y); g.stroke(); }
         if (guard.st === 'done') { g.fillStyle = 'rgba(255,214,140,.10)'; g.beginPath(); g.arc(359, 60, 220 + Math.sin(t / 400) * 10, 0, 7); g.fill(); }
-        if (burn > 0) { burn -= dt; flare += dt / .55; const fp = flamePt(); if (!on && Math.hypot(fp.x - WICK.x, fp.y - (WICK.y - 4)) < 34) { warm += dt; if (warm > .9) { on = true; tone(520, .25, .04, 'sine'); if (guard.st === 'off') { guard.st = 'wait'; guard.next = 4; } else if (guard.st === 'out') guard.st = 'run'; api.guide(guard.st === 'done' ? '촛불이 다시 켜졌어요.' : '촛불이 켜졌어요. 성냥은 흔들어 끄고… 어? 창틈으로 찬바람이 들어와요. 바람이 불면 손으로 불꽃을 감싸 지켜 주세요.'); } } else warm = Math.max(0, warm - dt * 1.5);
+        if (burn > 0) { burn -= dt; flare += dt / .55; const fp = flamePt(); if (!on && Math.hypot(fp.x - WICK.x, fp.y - (WICK.y - 4)) < 34) { warm += dt; if (warm > .9) { on = true; api.ready(true); tone(520, .25, .04, 'sine'); api.guide('촛불이 켜졌어요. 성냥은 좌우로 흔들거나 아래 버튼으로 후 불어 꺼 주세요.'); } } else warm = Math.max(0, warm - dt * 1.5);
           if (burn > 0 && burn < BURN * .06) { putOut(); tone(300, .12, .05, 'square'); api.guide(on ? '앗, 뜨거워요! 손끝까지 타서 얼른 껐어요.' : '앗, 뜨거워요! 손끝까지 타서 얼른 껐어요. 성냥갑을 눌러 새 성냥을 꺼내요.'); }
           if (burn <= 0 && !burnt) { burnt = true; bBlow.disabled = true; if (!on) api.guide('성냥이 다 탔어요. 성냥갑을 눌러 새 성냥을 꺼내요.'); } }
         if (!on && warm > 0) { const k = Math.min(1, warm / .9); flame(WICK.x, WICK.y + 6, .12 + .32 * k, t, 1); }   // 심지에 불이 옮겨붙으며 조금씩 커짐
@@ -379,7 +379,7 @@
         for (let i = smoke.length - 1; i >= 0; i--) { const s = smoke[i]; s.life -= dt * .7; if (s.life <= 0) { smoke.splice(i, 1); continue; } s.x += s.vx * dt; s.y += s.vy * dt; s.r += 14 * dt; g.fillStyle = `rgba(225,228,235,${(s.life * .45).toFixed(3)})`; g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.28); g.fill(); }
         for (let i = sparks.length - 1; i >= 0; i--) { const s = sparks[i]; s.life -= dt; if (s.life <= 0) { sparks.splice(i, 1); continue; } s.vy += 600 * dt; const ox = s.x, oy = s.y; s.x += s.vx * dt; s.y += s.vy * dt; g.strokeStyle = `rgba(255,${190 + rnd(0, 50) | 0},110,${Math.min(1, s.life * 4)})`; g.lineWidth = 2; g.beginPath(); g.moveTo(ox, oy); g.lineTo(s.x, s.y); g.stroke(); }   // 짧은 불티 줄
       }
-      window.__cdOn = () => { on = true; fade = 1; guard.st = 'run'; guard.next = .3; };
+      
       reset(); requestAnimationFrame(frame);
       return { reset, result() { return on ? { lit: 1 } : null; }, stop() { alive = false; } };
     },
@@ -476,7 +476,7 @@
       // 손을 떼면 젖은 아이싱이 살짝 퍼지며 가까운 선 사이 틈이 메워져 매끈한 한 면이 돼요
       function settle(c) { const L = c && c.iceL && c.iceL[c.iceL.length - 1]; if (!L) return; const r = Math.max(3, lineW * .55);
         tmpG.clearRect(0, 0, ICE, ICE); tmpG.filter = `blur(${r}px)`; tmpG.drawImage(L.m, 0, 0); tmpG.filter = 'none';
-        const id = tmpG.getImageData(0, 0, ICE, ICE), d = id.data; for (let i = 3; i < d.length; i += 4) { const a = d[i], v = a < 70 ? 0 : a > 120 ? 255 : (a - 70) / 50 * 255; d[i - 3] = d[i - 2] = d[i - 1] = 0; d[i] = v; }
+        const id = tmpG.getImageData(0, 0, ICE, ICE), d = id.data; for (let i = 3; i < d.length; i += 4) { const a = d[i], v = a < 104 ? 0 : a > 152 ? 255 : (a - 104) / 48 * 255; /* 가운데(128) 기준이라 누를 때마다 아이싱이 번져 커지지 않음 */ d[i - 3] = d[i - 2] = d[i - 1] = 0; d[i] = v; }
         const mg = L.m.getContext('2d'); mg.clearRect(0, 0, ICE, ICE); tmpG.putImageData(id, 0, 0); mg.drawImage(tmpC, 0, 0); composeIce(c); }
       function ice(a, b) {
         const c = cuts[focus];
@@ -659,17 +659,19 @@
       const mold = pic('bp_mold.jpg'), fishI = pic('bp_fish.png'), bagI = pic('bp_bag.png');
       const CAV = [[141, 94, 204, 144], [348, 94, 191, 130], [539, 87, 195, 134], [151, 248, 204, 134], [358, 231, 195, 137], [556, 228, 194, 130], [157, 389, 208, 130], [368, 375, 195, 144], [570, 365, 194, 131]];
       const SPILL = cv(W, H), sg = SPILL.getContext('2d');
-      let C, tool = 'batter', fk = 'bean', pipe = null, shop = false, orders = [], coins = 0, served = 0, nextOrder = 3, popups = [], lid = false, down = 0, flipT = 0, ptr = null, press = false, bag = [], alive = true, t0 = 0, steam = [], drops = [], lastSz = 0, lastPour = 0, peek = 0;
+      let C, tool = 'batter', fk = 'bean', pipe = null, shop = false, orders = [], coins = 0, served = 0, nextOrder = 3, popups = [], lid = false, down = 0, flipT = 0, ptr = null, press = false, bag = [], pack = [], alive = true, t0 = 0, steam = [], drops = [], lastSz = 0, lastPour = 0, peek = 0;
       function shape(c) { if (c.sh || !fishI.complete) return c.sh; const [, , w, h] = c.b, t = cv(w, h); t.getContext('2d').drawImage(fishI, 0, 0, w, h); const d = t.getContext('2d').getImageData(0, 0, w, h).data; let n = 0; for (let i = 3; i < d.length; i += 16) if (d[i] > 100) n++; c.area = n; return (c.sh = t); }
       const newCav = b => { const [, , w, h] = b, m = cv(w, h), fc = cv(w, h); return { b, m, mg: m.getContext('2d'), fc, fg: fc.getContext('2d'), fillN: 0, kinds: {}, sx: 0, sy: 0, cov: 0, over: 0, bean: 0, beanCov: 0, ck: [0, 0], out: false, bub: [] }; };
       function coverage(c) { const [, , w, h] = c.b, d = c.mg.getImageData(0, 0, w, h).data; let n = 0; for (let i = 3; i < d.length; i += 16) if (d[i] > 100) n++; return Math.min(1, n / (c.area || 1)); }
-      const reset = () => { C = CAV.map(newCav); sg.clearRect(0, 0, W, H); lid = false; down = 0; bag = []; tool = 'batter'; peek = 0; orders = []; coins = 0; served = 0; nextOrder = 3; ui(); api.ready(false); api.guide('주전자를 칸 위에서 누르고 있으면 반죽이 주르륵 흘러요. 칸을 반쯤 채우고 짤주머니로 팥이나 슈크림을 짠 다음 다시 덮어요.'); };
+      const reset = () => { C = CAV.map(newCav); sg.clearRect(0, 0, W, H); lid = false; down = 0; bag = []; pack = []; tool = 'batter'; peek = 0; orders = []; coins = 0; served = 0; nextOrder = 3; ui(); api.ready(false); api.guide('주전자를 칸 위에서 누르고 있으면 반죽이 주르륵 흘러요. 칸을 반쯤 채우고 짤주머니로 팥이나 슈크림을 짠 다음 다시 덮어요.'); };
       const hit = q => C.findIndex(c => !c.out && q.x > c.b[0] && q.x < c.b[0] + c.b[2] && q.y > c.b[1] && q.y < c.b[1] + c.b[3]);
       can.addEventListener('pointerdown', e => { ptr = at(e, can); e.preventDefault(); can.setPointerCapture(e.pointerId); press = true; const k = hit(ptr);
         if (lid || flipT) return;
-        if (shop && !lid) { const oi = orderAt(ptr); if (oi >= 0) { serve(oi); return; } }
+        if (shop && !lid) { const oi = orderAt(ptr); if (oi >= 0) { serve(oi); return; }
+          const ri = rackAt(ptr); if (ri >= 0) { pack.push(bag.splice(ri, 1)[0]); tone(520 + pack.length * 40, .08, .05, 'triangle'); scratch(.06, .04, 1800); api.guide(`봉투에 ${pack.length}마리 담았어요. 주문한 손님 카드를 누르면 봉투째 건네요.`); return; }
+          if (ptr.x > 770 && ptr.y > 420 && pack.length) { bag.push(...pack); pack = []; tone(300, .1, .05, 'sine'); api.guide('봉투를 비워서 보온대에 다시 올렸어요.'); return; } }
         if (tool === 'fill' && k >= 0) { const c = C[k]; if (c.cov < .3) api.guide('먼저 반죽을 반쯤 부어요.'); else if ((c.top || 0) > 0) api.guide('이미 반죽으로 덮었어요. 다른 칸에 짜요.'); else { pipe = { k, last: { x: ptr.x - c.b[0], y: ptr.y - c.b[1] } }; squeeze(c, pipe.last, pipe.last); } }
-        if (tool === 'take' && k >= 0) { const c = C[k]; if (c.cov > .5 && c.ck[0] > .3 && c.ck[1] > .3) { c.out = true; bag.push({ ck: [...c.ck], fill: fillOf(c) }); tone(660, .1, .06, 'sine'); ui(); api.ready(bag.length >= 3); } else api.guide('아직 덜 익었어요. 뚜껑을 닫고 양쪽을 다 구워요.'); } });
+        if (tool === 'take' && k >= 0) { const c = C[k]; if (c.cov > .5 && c.ck[0] > .3 && c.ck[1] > .3) { c.out = true; if (bag.length >= 14) { c.out = false; api.guide('보온대가 꽉 찼어요. 손님에게 먼저 건네요.'); return; } bag.push({ ck: [...c.ck], fill: fillOf(c) }); tone(660, .1, .06, 'sine'); ui(); api.ready(bag.length + served >= 3); if (shop) api.guide('보온대에 올려 따뜻하게 두었어요. 손님이 오면 보온대의 붕어빵을 눌러 봉투에 담아요.'); } else api.guide('아직 덜 익었어요. 뚜껑을 닫고 양쪽을 다 구워요.'); } });
       can.addEventListener('pointermove', e => { ptr = at(e, can); if (pipe && press) { const c = C[pipe.k], q = { x: ptr.x - c.b[0], y: ptr.y - c.b[1] }; if (Math.hypot(q.x - pipe.last.x, q.y - pipe.last.y) > 2) { squeeze(c, pipe.last, q); pipe.last = q; } } });
       // 짤주머니: 누른 채 움직이는 대로 팥·슈크림이 짜져 나와요 (붕어빵 모양 안에만)
       function squeeze(c, a, b2) { shape(c); const x = c.fg, d = Math.hypot(b2.x - a.x, b2.y - a.y), n = Math.max(1, Math.ceil(d / 3)), bean = fk === 'bean';
@@ -735,8 +737,11 @@
             g.fillStyle = 'rgba(245,245,240,.92)'; g.beginPath(); g.moveTo(0, 0); g.lineTo(-30 * sq, -88); g.quadraticCurveTo(0, -104, 30 * sq, -88); g.closePath(); g.fill(); g.shadowColor = 'transparent';
             g.fillStyle = fk === 'bean' ? 'rgba(80,34,28,.85)' : 'rgba(240,205,110,.9)'; g.beginPath(); g.moveTo(-4, -10); g.lineTo(-24 * sq, -80); g.quadraticCurveTo(0, -92, 24 * sq, -80); g.lineTo(4, -10); g.closePath(); g.fill();
             g.fillStyle = '#c9c9c4'; g.beginPath(); g.moveTo(-5, -8); g.lineTo(5, -8); g.lineTo(1.5, 2); g.lineTo(-1.5, 2); g.closePath(); g.fill(); g.strokeStyle = 'rgba(0,0,0,.15)'; g.lineWidth = 1; g.beginPath(); g.moveTo(-30 * sq, -88); g.lineTo(0, 0); g.lineTo(30 * sq, -88); g.stroke(); g.restore(); } }
+        can.style.cursor = !lid && (tool === 'batter' || tool === 'fill') && ptr && ptr.x < 760 ? 'none' : 'pointer';   // 도구를 그려 줄 때만 마우스를 숨김
         if (shop) drawShop(now, dt);
-        if (bagI.complete) { g.drawImage(bagI, 770, 420, 130, 117); if (bag.length) { g.fillStyle = 'rgba(255,250,240,.92)'; g.fillRect(780, 395, 110, 24); g.fillStyle = '#6b4a3a'; g.font = '14px "Gowun Batang",serif'; g.textAlign = 'center'; g.fillText(`봉투 속 ${bag.length}마리`, 835, 412); g.font = '11px "Gowun Dodum",sans-serif'; g.fillText(['bean', 'cream', 'mix'].map(k => [k, bag.filter(b2 => b2.fill === k).length]).filter(([, n]) => n).map(([k, n]) => `${FN[k]} ${n}`).join(' · '), 835, 432); } }
+        if (shop) drawRack();
+        if (shop && bagI.complete) { g.drawImage(bagI, 770, 420, 130, 117); g.fillStyle = 'rgba(255,250,240,.92)'; g.fillRect(780, 395 + 20, 110, 22); g.fillStyle = '#6b4a3a'; g.font = '14px "Gowun Batang",serif'; g.textAlign = 'center'; g.fillText(pack.length ? `봉투에 ${pack.length}마리` : '빈 봉투', 835, 431); }
+        if (!shop && bagI.complete) { g.drawImage(bagI, 770, 420, 130, 117); if (bag.length) { g.fillStyle = 'rgba(255,250,240,.92)'; g.fillRect(780, 395, 110, 24); g.fillStyle = '#6b4a3a'; g.font = '14px "Gowun Batang",serif'; g.textAlign = 'center'; g.fillText(`봉투 속 ${bag.length}마리`, 835, 412); g.font = '11px "Gowun Dodum",sans-serif'; g.fillText(['bean', 'cream', 'mix'].map(k => [k, bag.filter(b2 => b2.fill === k).length]).filter(([, n]) => n).map(([k, n]) => `${FN[k]} ${n}`).join(' · '), 835, 432); } }
         if (lid) { const k = C.filter(c => !c.out && c.cov > .05), avg = k.length ? k.reduce((a2, c) => a2 + c.ck[down], 0) / k.length : 0; g.fillStyle = 'rgba(255,250,240,.92)'; g.fillRect(16, 16, 270, 46); g.fillStyle = '#6b4a3a'; g.font = '16px "Gowun Batang",serif'; g.textAlign = 'left';
           g.fillText(avg > 1.4 ? '탄내가 나요! 얼른 뒤집거나 열어요' : avg > .8 ? '고소한 냄새가 나요' : avg > .3 ? '지글지글 익는 중…' : '틀이 데워지는 중…', 28, 45); } }
       const fillOf = c => { const k = Object.keys(c.kinds); return k.length === 2 ? 'mix' : k[0] || 'none'; };
@@ -744,10 +749,20 @@
       const NAMES = ['꼬마 손님', '산타 할아버지', '눈사람 아저씨', '우체부 아줌마', '고양이 손님', '할머니', '종지기 아저씨'];
       const cardBox = i => ({ x: 12 + i * 222, y: 8, w: 212, h: 92 });
       const orderAt = q => orders.findIndex((o, i) => { const b2 = cardBox(i); return q.x > b2.x && q.x < b2.x + b2.w && q.y > b2.y && q.y < b2.y + b2.h; });
+      const rackSlot = i => ({ x: 774 + (i % 2) * 60, y: 112 + Math.floor(i / 2) * 42, w: 56, h: 38 });
+      const rackAt = q => bag.findIndex((b2, i) => { const r = rackSlot(i); return q.x > r.x && q.x < r.x + r.w && q.y > r.y && q.y < r.y + r.h; });
+      function drawRack() {   // 다 구운 붕어빵을 올려 두는 보온대 (아래 따뜻한 불빛)
+        g.save(); g.fillStyle = 'rgba(60,40,28,.88)'; g.beginPath(); g.roundRect(764, 84, 130, 318, 12); g.fill();
+        const gl = g.createLinearGradient(0, 360, 0, 400); gl.addColorStop(0, 'rgba(255,150,60,0)'); gl.addColorStop(1, 'rgba(255,150,60,.45)'); g.fillStyle = gl; g.fillRect(764, 300, 130, 102);
+        g.fillStyle = '#ffe9c4'; g.font = 'bold 14px "Gowun Dodum",sans-serif'; g.textAlign = 'center'; g.fillText('보온대', 829, 104);
+        g.strokeStyle = 'rgba(220,200,170,.5)'; g.lineWidth = 1.5; for (let r = 0; r < 7; r++) { const y = 112 + r * 42 + 38; g.beginPath(); g.moveTo(770, y); g.lineTo(888, y); g.stroke(); }
+        bag.forEach((b2, i) => { const r = rackSlot(i); if (!fishI.complete) return; g.save(); g.filter = look((b2.ck[0] + b2.ck[1]) / 2); g.drawImage(fishI, r.x, r.y, r.w, r.h); g.restore(); g.fillStyle = b2.fill === 'bean' ? '#4a201c' : b2.fill === 'cream' ? '#e0b04f' : '#a7774a'; g.beginPath(); g.arc(r.x + r.w - 6, r.y + r.h - 6, 5, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 1.2; g.stroke(); });
+        if (Math.random() < .08 && bag.length) steam.push({ x: 780 + Math.random() * 100, y: 380, t: 0, smoke: false });
+        g.restore(); }
       function newOrder() { const n = 1 + Math.floor(Math.random() * (served < 3 ? 2 : 3)), items = Array.from({ length: n }, () => Math.random() < .55 ? 'bean' : 'cream'); orders.push({ who: NAMES[Math.floor(Math.random() * NAMES.length)], items, wait: 0, max: 55 + n * 15, mood: 0 }); tone(1320, .12, .05, 'triangle'); setTimeout(() => tone(1760, .15, .05, 'triangle'), 120); }
-      function serve(i) { const o = orders[i], pool = bag.slice(), use = []; for (const it of o.items) { const j = pool.findIndex(b2 => b2.fill === it || b2.fill === 'mix'); if (j < 0) { api.guide(`${o.who}: "${o.items.map(t => FN[t]).join(', ')} 붕어빵 주세요!" — 아직 다 안 모였어요.`); tone(220, .15, .05, 'square'); return; } use.push(pool.splice(j, 1)[0]); }
+      function serve(i) { const o = orders[i], pool = pack.slice(), use = []; if (!pack.length) { api.guide(`${o.who}: "${o.items.map(t => FN[t]).join(', ')} 붕어빵 주세요!" — 보온대의 붕어빵을 눌러 봉투에 담아 주세요.`); tone(220, .15, .05, 'square'); return; } for (const it of o.items) { const j = pool.findIndex(b2 => b2.fill === it || b2.fill === 'mix'); if (j < 0) { api.guide(`${o.who}: "${FN[it]} 붕어빵이 봉투에 없어요." 봉투를 누르면 비울 수 있어요.`); tone(220, .15, .05, 'square'); return; } use.push(pool.splice(j, 1)[0]); } if (pool.length) { api.guide(`${o.who}: "${o.items.length}마리만 주세요! 봉투에 ${pack.length}마리나 있어요." 봉투를 누르면 비울 수 있어요.`); tone(220, .15, .05, 'square'); return; }
         let pay = 0, burnt = 0, perfect = 0; use.forEach(b2 => { const v = (b2.ck[0] + b2.ck[1]) / 2; if (b2.ck.some(x => x > 1.6)) burnt++; else { pay += 500; if (b2.ck.every(x => x > .75 && x < 1.4)) { perfect++; pay += 200; } } });
-        const tip = o.wait < o.max * .4 ? 300 : 0; pay += tip; coins += pay; served++; bag = pool; orders.splice(i, 1);
+        const tip = o.wait < o.max * .4 ? 300 : 0; pay += tip; coins += pay; served++; pack = []; orders.splice(i, 1);
         popups.push({ x: cardBox(i).x + 100, y: 118, t: 0, txt: burnt ? `탄 건 싫어요… +${pay}원` : `+${pay}원${perfect === use.length ? ' 노릇노릇!' : ''}` });
         [784, 988, 1175, 1568].forEach((f, k) => setTimeout(() => tone(f, .18, .05, 'triangle'), k * 80)); api.ready(true); ui(); }
       function drawShop(now, dt) { nextOrder -= dt; if (nextOrder <= 0 && orders.length < 3) { newOrder(); nextOrder = 14 + Math.random() * 8; }
@@ -765,7 +780,7 @@
         const rs = T.row('가게'); T.chip(rs, shop ? '🧾 손님 받는 중' : '🧾 손님 받기', () => { shop = !shop; if (shop) { orders = []; nextOrder = 1.5; } ui(); }, shop); if (shop) rs.append(mk('span', 'thint', ` 💰 ${coins}원 · 손님 ${served}명`));
         const r2 = T.row('틀'); T.chip(r2, lid ? '뚜껑 열기' : '뚜껑 닫기', () => { lid = !lid; tone(lid ? 140 : 220, .12, .07, 'square'); ui(); }, lid); T.chip(r2, '↻ 뒤집기', () => { if (!lid) { api.guide('뚜껑을 닫은 다음에 뒤집어요.'); return; } down = 1 - down; flipT = 1; tone(110, .15, .08, 'square'); setTimeout(() => tone(90, .1, .07, 'square'), 200); });
         const n = bag.length, good = bag.filter(b => b.ck.every(v => v > .75 && v < 1.4)).length;
-        side.append(mk('p', 'thint', shop ? '위쪽 주문표를 보고 주문대로 구워요. 꺼낸 붕어빵이 맞게 모이면 주문표를 눌러 건네요. 오래 기다리게 하면 손님이 가 버려요!' : tool === 'batter' ? '주전자를 칸 위에서 누르고 있으면 기울어지며 반죽이 주르륵 흘러 붓는 자리부터 퍼져요. 속을 넣은 칸은 그 위에 부어 덮어요. 가득 찬 칸에 계속 부으면 틀 밖으로 넘쳐요.' : tool === 'fill' ? '반죽을 반쯤 부은 칸 위에서 누른 채 움직이면 그린 대로 속이 짜져 나와요. 하트도, 지그재그도, 듬뿍도 마음대로요. 팥과 슈크림을 섞어도 돼요.' : '양쪽이 노릇하게 익은 붕어빵을 눌러 봉투에 담아요.'));
+        side.append(mk('p', 'thint', shop ? '위쪽 주문표를 보고 주문대로 구워요. 꺼낸 붕어빵은 오른쪽 보온대에서 따뜻하게 기다려요. 보온대의 붕어빵을 눌러 주문한 개수만큼 봉투에 담고, 손님 주문표를 누르면 봉투째 건네요. 봉투를 누르면 다시 비울 수 있어요. 오래 기다리게 하면 손님이 가 버려요!' : tool === 'batter' ? '주전자를 칸 위에서 누르고 있으면 기울어지며 반죽이 주르륵 흘러 붓는 자리부터 퍼져요. 속을 넣은 칸은 그 위에 부어 덮어요. 가득 찬 칸에 계속 부으면 틀 밖으로 넘쳐요.' : tool === 'fill' ? '반죽을 반쯤 부은 칸 위에서 누른 채 움직이면 그린 대로 속이 짜져 나와요. 하트도, 지그재그도, 듬뿍도 마음대로요. 팥과 슈크림을 섞어도 돼요.' : '양쪽이 노릇하게 익은 붕어빵을 눌러 봉투에 담아요.'));
         side.append(mk('p', 'thint', `열어 둔 동안엔 반죽이 살짝 굳으며 기포만 올라와요. 팥을 넣고 덮은 다음 뚜껑을 닫아야 노릇하게 구워지고, 김 색과 냄새로 익은 정도를 알 수 있어요. 뒤집어서 반대쪽도 구워요. ${n ? `봉투 ${n}마리 (노릇노릇 ${good})` : ''}`)); }
       reset(); requestAnimationFrame(frame);
       window.__bp = { fill: () => C.forEach(c => { shape(c); c.mg.drawImage(c.sh, 0, 0); c.cov = 1; }), cook: (a, b) => C.forEach(c => { c.ck = [a, b]; }), down: d => { down = d; }, take: () => C.forEach((c, i) => { if (i < 4) { c.out = true; bag.push({ ck: [...c.ck] }); } }) };
@@ -1166,7 +1181,7 @@
         if (mode === 'deco') { const it = items[sel]; if (!drag || !it) return;
           if (drag.handle) { const d = Math.hypot(p.x - it.x, p.y - it.y), a = Math.atan2(p.y - it.y, p.x - it.x); it.s = Math.max(.3, Math.min(2.6, drag.s0 * d / drag.d0)); it.r = drag.r0 + (a - drag.a0); return; }
           const q = inDome(p.x - drag.dx, p.y - drag.dy); it.x = q.x; it.y = Math.min(FLOOR + 14, q.y); return; }
-        if (!gdrag || gdrag.id !== e.pointerId) return; const nx = Math.max(-150, Math.min(150, p.x - gdrag.x)), ny = Math.max(-120, Math.min(120, p.y - gdrag.y)); vx = nx - ox; vy = ny - oy; ox = nx; oy = ny;
+        if (!gdrag || gdrag.id !== e.pointerId) return; const soft = (d, L) => L * Math.tanh(d / L), nx = soft(p.x - gdrag.x, 170), ny = soft(p.y - gdrag.y, 130); vx = nx - ox; vy = ny - oy; ox = nx; oy = ny;   // 끝에 딱 막히지 않고 고무줄처럼 부드럽게 버팀
         const k = Math.hypot(vx, vy); if (k > 3) { if (!shaken) { shaken = true; api.ready(true); api.guide('눈이 휘날려요. 가만히 두면 천천히 가라앉아요.'); } for (const q of P) { const lift = q.y > FLOOR - 30 ? 1.6 : 1; if (q.y > FLOOR - 12) { q.vy -= k * rnd(.25, .8); q.vx += rnd(-1, 1) * k * .3; } q.vx += (-vx * rnd(-.1, .5) + rnd(-1, 1) * k * .45) * lift; q.vy += (-vy * rnd(-.1, .45) + rnd(-1, .4) * k * .45) * lift; } } });
       const up = () => { drag = null; gdrag = null; }; can.addEventListener('pointerup', up); can.addEventListener('pointercancel', up);
       function drawFlakes(x) {
@@ -1190,7 +1205,7 @@
           q.x += q.vx * dt; q.y += q.vy * dt;
           const dx = q.x - CX, dy = q.y - CY, d = Math.hypot(dx, dy), lim = R - q.r - 3; if (d > lim) { const nx = dx / d, ny = dy / d, dot = q.vx * nx + q.vy * ny; q.x = CX + nx * (lim - 1); q.y = CY + ny * (lim - 1); if (dot > 0) { q.vx -= 1.2 * dot * nx; q.vy -= 1.2 * dot * ny; } q.vx -= nx * rnd(.3, .9); q.vy -= ny * rnd(.3, .9); q.vx += rnd(-.4, .4); }   // 유리에 붙지 않고 튕겨 나옴
           if (q.y > FLOOR + 4 - q.r) { q.y = FLOOR + 4 - q.r; q.vy = 0; q.vx *= .5; } }
-        g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(back, 0, 0, 800, 800); g.translate(400 + ox, 700 + oy); g.rotate(ox / 900); g.translate(-400, -700); g.drawImage(glass, 0, 0, 800, 800);
+        g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(back, 0, 0, 800, 800); g.translate(400 + ox, 700 + oy); g.rotate(ox / 900); if (mode !== 'deco') g.scale(.84, .84); g.translate(-400, -700); g.drawImage(glass, 0, 0, 800, 800);
         g.save(); g.beginPath(); g.arc(CX, CY, R, 0, 7); g.clip();
         const sky = g.createLinearGradient(0, CY - R, 0, FLOOR); sky.addColorStop(0, 'rgba(40,60,100,.35)'); sky.addColorStop(1, 'rgba(200,220,240,.15)'); g.fillStyle = sky; g.fillRect(CX - R, CY - R, R * 2, R * 2);
         g.fillStyle = 'rgba(250,252,255,.95)'; g.beginPath(); g.ellipse(CX, FLOOR + 10, R * .85, 26, 0, 0, 7); g.fill();          // 바닥 눈
@@ -1210,8 +1225,9 @@
 
   // 짧은 소리(없어도 놀이는 됨)
   let AC = null;
-  const scratch = (d, vol, fq) => { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime, n = Math.ceil(AC.sampleRate * d), bf = AC.createBuffer(1, n, AC.sampleRate), ch = bf.getChannelData(0); for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / n); const src = AC.createBufferSource(), fl = AC.createBiquadFilter(), gn = AC.createGain(); src.buffer = bf; fl.type = 'bandpass'; fl.frequency.value = fq || 2500; fl.Q.value = .8; gn.gain.value = vol; src.connect(fl); fl.connect(gn); gn.connect(AC.destination); src.start(t); } catch (e) { /* 소리 없음 */ } };   // 사각사각·칙 같은 마찰음
-  const tone = (f, d, vol, type, f2) => { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime; for (const [fr, v] of f2 ? [[f, vol], [f2, vol * .4]] : [[f, vol]]) { const o = AC.createOscillator(), g = AC.createGain(); o.type = type || 'sine'; o.frequency.value = fr; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d); } } catch (e) { /* 소리 없음 */ } };
+  const scratch = (d, vol, fq) => { vol *= VOL; try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime, n = Math.ceil(AC.sampleRate * d), bf = AC.createBuffer(1, n, AC.sampleRate), ch = bf.getChannelData(0); for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / n); const src = AC.createBufferSource(), fl = AC.createBiquadFilter(), gn = AC.createGain(); src.buffer = bf; fl.type = 'bandpass'; fl.frequency.value = fq || 2500; fl.Q.value = .8; gn.gain.value = vol; src.connect(fl); fl.connect(gn); gn.connect(AC.destination); src.start(t); } catch (e) { /* 소리 없음 */ } };   // 사각사각·칙 같은 마찰음
+  const VOL = .55;   // 전체 소리 크기 (1이면 원래 크기)
+  const tone = (f, d, vol, type, f2) => { vol *= VOL; try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime; for (const [fr, v] of f2 ? [[f, vol], [f2, vol * .4]] : [[f, vol]]) { const o = AC.createOscillator(), g = AC.createGain(); o.type = type || 'sine'; o.frequency.value = fr; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d); } } catch (e) { /* 소리 없음 */ } };
 
   // ── 종 치기: 누르거나 쓸면 종이 울린다. 빛나는 종을 따라 치면 캐럴 한 소절이 된다.
   plays.bells = {
@@ -1447,9 +1463,9 @@
       skins.forEach((im, i) => { const b = mk('button'); b.type = 'button'; b.dataset.k = i; const t = new Image(); t.src = im.src; t.alt = '포장지 ' + (i + 1); b.append(t); b.addEventListener('click', () => { skin = i; off = null; mark(); }); skinBar.append(b); }); board.append(skinBar);
       if (cfg.lidSkin) { lidBar = mk('div', 'dcpal'); lidBar.append(mk('span', 'dclab', '뚜껑')); const same = mk('button', 'dcsame', '상자와 같게'); same.type = 'button'; same.dataset.k = -1; same.addEventListener('click', () => { lidSkin = -1; off = null; mark(); }); lidBar.append(same);
         skins.forEach((im, i) => { const b = mk('button'); b.type = 'button'; b.dataset.k = i; const t = new Image(); t.src = im.src; t.alt = '뚜껑 포장지 ' + (i + 1); b.append(t); b.addEventListener('click', () => { lidSkin = i; off = null; mark(); }); lidBar.append(b); }); board.append(lidBar); }
-      if (cfg.ribbon) { ribBar = mk('div', 'dcpal'); ribBar.append(mk('span', 'dclab', '리본')); const none = mk('button', 'dcsame', '없음'); none.type = 'button'; none.dataset.k = -1; none.addEventListener('click', () => { rib = -1; off = null; mark(); }); ribBar.append(none);
+      if (cfg.ribbon) { ribBar = mk('div', 'dcpal'); ribBar.append(mk('span', 'dclab', '리본')); const none = mk('button', 'dcsame', '없음'); none.type = 'button'; none.dataset.k = -1; none.addEventListener('click', () => { rib = -1; tie = null; off = null; mark(); }); ribBar.append(none);
         RIBS.forEach(([c, n], i) => { const b = mk('button', 'dcrib'); b.type = 'button'; b.dataset.k = i; b.title = n + ' 리본'; const sw = mk('span'); sw.style.cssText = `display:block;width:100%;height:100%;border-radius:6px;background:linear-gradient(90deg,${c} 0 38%,rgba(255,255,255,.55) 50%,${c} 62%)`; b.append(sw);
-          b.addEventListener('click', () => { rib = i; off = null; if (!items.some(it => cfg.stickers[it.i][0] === 'bow.png')) { const b2 = cfg.base, kx = b2.w / b2.iw, ky = b2.h / b2.ih, top = cfg.faces[2].p, cx = top.reduce((a, q) => a + q[0], 0) / 4, cy = top.reduce((a, q) => a + q[1], 0) / 4; items.push({ i: cfg.stickers.findIndex(q => q[0] === 'bow.png'), x: b2.x + cx * kx, y: b2.y + cy * ky - 18, r: 0, s: .9, f: 1 }); sel = -1; paintSel(); } tone(660, .08, .04, 'triangle'); mark(); }); ribBar.append(b); }); board.append(ribBar); } }
+          b.addEventListener('click', () => { rib = i; off = null; if (!tie) { tie = { step: 1, lL: 0, lR: 0, tight: 0 }; api.guide('리본을 묶어요! ① 뚜껑 가운데 매듭에서 왼쪽으로 끌어 고리를 하나 만들어요.'); } tone(660, .08, .04, 'triangle'); mark(); }); ribBar.append(b); }); board.append(ribBar); } }
     cfg.stickers.forEach((q, i) => { const b = mk('button'); b.type = 'button'; const t = new Image(); t.src = 'assets/' + q[0]; t.alt = '조각 ' + (i + 1); if (q[2]) t.style.filter = q[2]; b.append(t);
       b.addEventListener('click', () => { if (cfg.stamp) cur = i; else { items.push({ i, x: W / 2 + rnd(-70, 70), y: H / 2 + rnd(-70, 70), r: rnd(-.25, .25), s: 1, f: 1 }); sel = items.length - 1; paintSel(); } mark(); }); pal.append(b); });
     board.append(pal);
@@ -1492,6 +1508,31 @@
     const loc = (it, p) => { const c = Math.cos(-it.r), sn = Math.sin(-it.r), dx = p.x - it.x, dy = p.y - it.y; return { x: dx * c - dy * sn, y: dx * sn + dy * c }; };
     const hpt = it => { const [w, h] = size(it.i, it.s), c = Math.cos(it.r), sn = Math.sin(it.r), hx = w / 2 + 8, hy = -h / 2 - 8; return { x: it.x + hx * c - hy * sn, y: it.y + hx * sn + hy * c }; };
     const hit = p => { for (let k = items.length - 1; k >= 0; k--) { const it = items[k], [w, h] = size(it.i, it.s), q = loc(it, p); if (Math.abs(q.x) < w / 2 && Math.abs(q.y) < h / 2) return k; } return -1; };
+    // 리본 묶기: 매듭에서 왼쪽으로 끌면 왼쪽 고리, 오른쪽으로 끌면 오른쪽 고리, 아래로 당기면 꽉 묶여요
+    let tie = null, tieDrag = null;
+    const knot = () => { const b2 = cfg.base, kx = b2.w / b2.iw, ky = b2.h / b2.ih, top = cfg.faces[2].p, cx = top.reduce((a, q) => a + q[0], 0) / 4, cy = top.reduce((a, q) => a + q[1], 0) / 4; return { x: b2.x + cx * kx, y: b2.y + cy * ky }; };
+    can.addEventListener('pointerdown', e => { const p0 = at(e, can); if (rib >= 0 && tie && tie.step < 4) { const K = knot(); if (Math.hypot(p0.x - K.x, p0.y - K.y) < 95) { e.preventDefault(); e.stopImmediatePropagation(); tieDrag = { id: e.pointerId }; can.setPointerCapture(e.pointerId); return; } } }, true);
+    can.addEventListener('pointermove', e => { if (!tieDrag || tieDrag.id !== e.pointerId || !tie) return; const p0 = at(e, can), K = knot(), dx = p0.x - K.x, dy = p0.y - K.y, cl = v => Math.max(0, Math.min(1, v));
+      if (tie.step === 1) { tie.lL = Math.max(tie.lL, cl(-dx / 110)); if (tie.lL >= 1) { tie.step = 2; tone(700, .12, .05, 'triangle'); api.guide('② 이번엔 매듭에서 오른쪽으로 끌어 고리를 하나 더 만들어요.'); } }
+      else if (tie.step === 2) { tie.lR = Math.max(tie.lR, cl(dx / 110)); if (tie.lR >= 1) { tie.step = 3; tone(820, .12, .05, 'triangle'); api.guide('③ 매듭을 아래로 쭉 당겨 꽉 묶어요.'); } }
+      else if (tie.step === 3) { tie.tight = Math.max(tie.tight, cl(dy / 70)); if (tie.tight >= 1) { tie.step = 4; [660, 880, 1100].forEach((f, k) => setTimeout(() => tone(f, .25, .05, 'triangle'), k * 90)); scratch(.15, .05, 1400); api.guide('리본을 예쁘게 묶었어요! 꼬리표를 올려도 되고, 다 됐으면 아래 버튼을 눌러요.'); mark(); } }
+      if (Math.random() < .2) scratch(.04, .02, 2200); e.stopImmediatePropagation(); }, true);
+    const tieUp = e => { if (tieDrag && tieDrag.id === e.pointerId) { tieDrag = null; e.stopImmediatePropagation(); } }; can.addEventListener('pointerup', tieUp, true); can.addEventListener('pointercancel', tieUp, true);
+    function drawBow(c) { if (rib < 0 || !tie) return; const K = knot(), col = RIBS[rib][0], tg = tie.tight, x = K.x, y = K.y - 6 * tg; c.save(); c.translate(x, y); c.scale(1.6, 1.6); c.translate(-x, -y);
+      const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16), r = n >> 16, g2 = n >> 8 & 255, b = n & 255, f = v => Math.max(0, Math.min(255, Math.round(v * k))); return `rgb(${f(r)},${f(g2)},${f(b)})`; };
+      const sat = (x0, y0, x1, y1) => { const gr = c.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, shade(col, .72)); gr.addColorStop(.45, shade(col, 1.18)); gr.addColorStop(.55, shade(col, 1.05)); gr.addColorStop(1, shade(col, .68)); return gr; };
+      c.save(); c.lineJoin = 'round';
+      // 꼬리 두 가닥
+      const tl = 26 + 34 * tg; [[-1, .35], [1, -.3]].forEach(([sd, sw]) => { c.fillStyle = sat(x, y, x + sd * 30, y + tl); c.beginPath(); c.moveTo(x - 6 * sd, y); c.quadraticCurveTo(x + sd * (10 + sw * 20), y + tl * .55, x + sd * (18 + 8 * tg), y + tl); c.lineTo(x + sd * (30 + 8 * tg), y + tl - 9); c.quadraticCurveTo(x + sd * (20 + sw * 20), y + tl * .5, x + 6 * sd, y); c.closePath(); c.fill(); c.strokeStyle = 'rgba(0,0,0,.18)'; c.lineWidth = 1; c.stroke(); });
+      // 고리 (당길수록 살짝 작고 동그랗게)
+      const loop = (sd, amt) => { if (amt <= 0) return; const L = (20 + 52 * amt) * (1 - .12 * tg), Hh = (12 + 22 * amt) * (1 - .1 * tg); c.fillStyle = sat(x, y - Hh, x + sd * L, y + Hh); c.beginPath(); c.moveTo(x, y); c.bezierCurveTo(x + sd * L * .3, y - Hh * 1.5, x + sd * L * 1.05, y - Hh * 1.2, x + sd * L, y - 2); c.bezierCurveTo(x + sd * L * 1.02, y + Hh * .9, x + sd * L * .35, y + Hh * .9, x, y); c.fill(); c.strokeStyle = 'rgba(0,0,0,.2)'; c.lineWidth = 1.2; c.stroke();
+        c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.moveTo(x + sd * 4, y); c.bezierCurveTo(x + sd * L * .35, y - Hh * .5, x + sd * L * .75, y - Hh * .45, x + sd * L * .8, y); c.bezierCurveTo(x + sd * L * .7, y + Hh * .3, x + sd * L * .3, y + Hh * .25, x + sd * 4, y); c.fill(); };   // 고리 안쪽 그늘
+      loop(-1, tie.lL); loop(1, tie.lR);
+      // 매듭
+      const kr = 13 - 4 * tg; c.fillStyle = sat(x - kr, y - kr, x + kr, y + kr); c.beginPath(); c.ellipse(x, y, kr, kr * .85, 0, 0, 7); c.fill(); c.strokeStyle = 'rgba(0,0,0,.25)'; c.stroke();
+      c.restore();
+      if (tie.step < 4) { const t = performance.now() / 400, dir = tie.step === 1 ? -1 : tie.step === 2 ? 1 : 0, ax = x + dir * (40 + 14 * Math.sin(t)), ay = y + (dir ? -30 : 34 + 10 * Math.sin(t)); c.save(); c.fillStyle = 'rgba(255,255,255,.95)'; c.strokeStyle = 'rgba(120,80,50,.6)'; c.lineWidth = 2; c.beginPath(); c.arc(ax, ay, 14, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#7a4a2a'; c.font = '700 16px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(dir < 0 ? '←' : dir > 0 ? '→' : '↓', ax, ay + 1); c.restore(); }   // 끌 방향 안내
+      c.restore(); }
     can.addEventListener('pointerdown', e => { const p = at(e, can); e.preventDefault();
       if (cfg.stamp) { items.push({ i: cur, x: p.x, y: p.y, r: stR + rnd(-.05, .05), s: stS, f: 1, a: .95 }); tone(170, .07, .09, 'triangle'); return mark(); }
       if (items[sel]) { const hp = hpt(items[sel]); if (Math.hypot(p.x - hp.x, p.y - hp.y) < 20) { const it = items[sel]; drag = { id: e.pointerId, handle: 1, s0: it.s, r0: it.r, d0: Math.hypot(hp.x - it.x, hp.y - it.y), a0: Math.atan2(hp.y - it.y, hp.x - it.x) }; can.setPointerCapture(e.pointerId); return; } }
@@ -1516,7 +1557,7 @@
     // 리본: 각 면 가운데를 지나 상자를 십자로 감싸는 띠 (윤기 있는 새틴)
     function ribbons(o, b) { if (rib < 0) return; const kx = b.w / b.iw, ky = b.h / b.ih, M = q => [b.x + q[0] * kx, b.y + q[1] * ky], L = (a, c, t) => [a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t], col = RIBS[rib][0], w = .07;
       const band = (a0, a1, c0, c1) => { const P = [L(a0, a1, .5 - w), L(a0, a1, .5 + w), L(c0, c1, .5 + w), L(c0, c1, .5 - w)].map(M), g2 = o.createLinearGradient(P[0][0], P[0][1], P[1][0], P[1][1]);
-        g2.addColorStop(0, col); g2.addColorStop(.42, col); g2.addColorStop(.5, 'rgba(255,255,255,.75)'); g2.addColorStop(.58, col); g2.addColorStop(1, col);
+        g2.addColorStop(0, col); g2.addColorStop(.42, col); g2.addColorStop(.5, 'rgba(255,255,255,.3)'); g2.addColorStop(.58, col); g2.addColorStop(1, col);
         o.save(); o.globalCompositeOperation = 'source-atop'; o.beginPath(); P.forEach((q, i) => i ? o.lineTo(q[0], q[1]) : o.moveTo(q[0], q[1])); o.closePath(); o.fillStyle = col; o.fill(); o.fillStyle = g2; o.globalAlpha = .55; o.fill(); o.globalAlpha = 1;
         o.strokeStyle = 'rgba(0,0,0,.18)'; o.lineWidth = 1.2; o.beginPath(); o.moveTo(P[0][0], P[0][1]); o.lineTo(P[3][0], P[3][1]); o.moveTo(P[1][0], P[1][1]); o.lineTo(P[2][0], P[2][1]); o.stroke(); o.restore(); };
       cfg.faces.forEach((f, i) => { const p = f.p; if (i === 2) { band(p[0], p[3], p[1], p[2]); band(p[0], p[1], p[3], p[2]); } else band(p[0], p[1], p[3], p[2]); }); }
@@ -1528,20 +1569,21 @@
         else if (shad && shad.complete) { c.save(); c.globalCompositeOperation = out ? 'source-over' : 'multiply'; c.drawImage(shad, b.x, b.y, b.w, b.h); c.restore(); }
         if (skin >= 0 && skins[skin].complete) { if (!off) { off = cv(W, H); const o = off.getContext('2d'); o.drawImage(base, b.x, b.y, b.w, b.h); o.globalCompositeOperation = 'source-atop'; o.fillStyle = o.createPattern(skins[skin], 'repeat'); o.fillRect(0, 0, W, H); if (cfg.faces) { wrapFaces(o, b); ribbons(o, b); } o.globalCompositeOperation = 'multiply'; o.drawImage(base, b.x, b.y, b.w, b.h); o.globalCompositeOperation = 'destination-in'; o.drawImage(base, b.x, b.y, b.w, b.h); } c.drawImage(off, 0, 0); }
         else c.drawImage(base, b.x, b.y, b.w, b.h); }
+      drawBow(c);
       for (const it of items) { const [w, h] = size(it.i, it.s), f = cfg.stickers[it.i][2]; c.save(); c.translate(it.x, it.y); c.rotate(it.r); c.scale(it.cim ? 1 : it.f || 1, 1); if (f) c.filter = f; c.globalAlpha = it.a || 1; c.drawImage(it.cim || imgs[it.i], -w / 2, -h / 2, w, h); c.restore(); }
       if (!out && !cfg.stamp && items[sel]) { const it = items[sel], [w, h] = size(it.i, it.s); c.save(); c.translate(it.x, it.y); c.rotate(it.r); c.setLineDash([6, 5]); c.strokeStyle = 'rgba(192,57,43,.8)'; c.lineWidth = 2; c.strokeRect(-w / 2 - 4, -h / 2 - 4, w + 8, h + 8); c.restore(); c.setLineDash([]);
         const hp = hpt(it); c.fillStyle = '#fff'; c.strokeStyle = '#c0392b'; c.lineWidth = 3; c.beginPath(); c.arc(hp.x, hp.y, 12, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#c0392b'; c.font = '15px serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('↻', hp.x, hp.y + 1); c.textBaseline = 'alphabetic'; }
       if (cfg.text && txt && !(out && cfg.text.hideOut)) { const t = cfg.text, per = t.per || 99, lines = []; for (let i = 0; i < txt.length; i += per) lines.push(txt.slice(i, i + per)); c.fillStyle = t.color || '#5b3a2e'; c.font = `${t.size || 30}px "Gowun Batang",serif`; c.textAlign = 'center'; lines.forEach((ln, i) => c.fillText(ln, t.x, t.y + i * (t.size || 30) * 1.35)); }
     }
     const loop = () => { if (!alive) return; paint(g, false); requestAnimationFrame(loop); };
-    const reset = () => { items = []; sel = -1; skin = -1; lidSkin = -1; off = null; txt = ''; if (input) input.value = ''; mark(); paintSel(); api.guide(cfg.guide); };
+    const reset = () => { items = []; sel = -1; skin = -1; lidSkin = -1; off = null; tie = null; tieDrag = null; txt = ''; if (input) input.value = ''; mark(); paintSel(); api.guide(cfg.guide); };
     reset(); requestAnimationFrame(loop);
     return { reset, result() { if (!ok()) return null; const o = cfg.out || { x: 0, y: 0, w: W, h: H }, t = cv(W, H); paint(t.getContext('2d'), true); const k = Math.min(1, (cfg.outSize || 190) / Math.max(o.w, o.h)), r = cv(Math.round(o.w * k), Math.round(o.h * k)); r.getContext('2d').drawImage(t, o.x, o.y, o.w, o.h, 0, 0, r.width, r.height); const res = cfg.noImg ? { done: 1 } : { img: r.toDataURL('image/png') }; if (cfg.text) res.text = txt.trim(); if (cfg.fill && (inside.things.length || inside.note)) res.inside = inside; return res; }, stop() { alive = false; } };
   } });
   const seq = (pre, n, w) => Array.from({ length: n }, (_, i) => [pre + (i + 1) + '.png', w]);
   plays.wreath = deco({ title: '리스 만들기', doneLabel: '트리에 달기', doneMsg: '내가 만든 리스를 트리에 걸어 뒀어요.', guide: '아래 재료를 누르면 리스 위에 올라가요. 끌어서 자리를 잡고, 판 밖으로 끌어내면 떼어져요. 네 개 이상 올려 보세요.', bg: '#e7eef3', base: { img: 'wr_base2.png', x: 70, y: 70, w: 500, h: 500 }, stickers: seq('wr_', 13, 120), min: 4 });
   plays.ginger = deco({ title: '진저브레드 집 꾸미기', doneLabel: '탁자에 올려 두기', doneMsg: '진저브레드 집을 탁자에 올려 뒀어요.', guide: '평평한 쿠키와 사탕을 눌러서 과자 집에 붙여요. 끌어서 옮기고, 판 밖으로 끌어내면 떼어져요. 다섯 개 이상 붙여 보세요.', bg: '#e7eef3', base: { img: 'gb_base2.png', x: 80, y: 90, w: 480, h: 480 }, stickers: [['gb_sq.png', 70], ['gb_rect.png', 96], ['gb_rect_ice.png', 96], ['gb_win.png', 64], ['gb_plank.png', 110], ['ck_round.png', 74], ['ck_heart.png', 70], ['ck_star.png', 74], ['ck_tree.png', 74], ['ck_star6.png', 70]].concat(seq('cd_s', 16, 62)), min: 5 });
-  plays.wrap = deco({ fill: 1, ribbon: 1, title: '선물 포장하기', doneLabel: '트리 아래에 놓기', doneMsg: '포장한 선물을 트리 곁에 놓았어요.', guide: '포장지를 고르고, 리본 색을 고르면 상자에 리본이 둘러져요. 꼬리표도 올려 꾸며요.', bg: '#f1e8dc', base: { img: 'box_body2.png', shadow: 'box_shadow2.png', x: 90, y: 150, w: 460, h: 340, iw: 520, ih: 358 }, lidSkin: true, faces: [{ p: [[55, 112], [325, 152], [325, 350], [58, 300]] }, { p: [[325, 152], [508, 98], [508, 275], [325, 350]] }, { lid: 1, p: [[42, 55], [245, 4], [515, 34], [328, 90]], o: [42, 55], u: [245, 4], v: [328, 90] }, { lid: 1, p: [[42, 55], [328, 90], [326, 153], [44, 114]] }, { lid: 1, p: [[328, 90], [515, 34], [510, 99], [326, 153]] }], skins: ['paper_1.jpg', 'paper_2.jpg', 'paper_3.jpg', 'paper_4.jpg'], stickers: [['bow.png', 190], ['wr_11.png', 190], ['tag_1.png', 90, '', 1], ['tag_2.png', 90, '', 1], ['tag_3.png', 90, '', 1]], min: 1 });
+  plays.wrap = deco({ fill: 1, ribbon: 1, title: '선물 포장하기', doneLabel: '트리 아래에 놓기', doneMsg: '포장한 선물을 트리 곁에 놓았어요.', guide: '포장지를 고르고, 리본 색을 고르면 상자에 리본이 둘러져요. 꼬리표도 올려 꾸며요.', bg: '#f1e8dc', base: { img: 'box_body2.png', shadow: 'box_shadow2.png', x: 90, y: 150, w: 460, h: 340, iw: 520, ih: 358 }, lidSkin: true, faces: [{ p: [[55, 112], [325, 152], [325, 350], [58, 300]] }, { p: [[325, 152], [508, 98], [508, 275], [325, 350]] }, { lid: 1, p: [[42, 55], [245, 4], [515, 34], [328, 90]], o: [42, 55], u: [245, 4], v: [328, 90] }, { lid: 1, p: [[42, 55], [328, 90], [326, 153], [44, 114]] }, { lid: 1, p: [[328, 90], [515, 34], [510, 99], [326, 153]] }], skins: ['paper_1.jpg', 'paper_2.jpg', 'paper_3.jpg', 'paper_4.jpg'], stickers: [['tag_1.png', 90, '', 1], ['tag_2.png', 90, '', 1], ['tag_3.png', 90, '', 1]], min: 1 });
   plays.card = deco({ title: '크리스마스 카드', doneLabel: '카드 간직하기', doneMsg: '카드를 탁자에 올려 뒀어요.', guide: '도장을 고르고 카드를 누르면 찍혀요. 아래 칸에 한마디도 적어 보세요. 도장을 두 번 이상 찍어요.', bg: '#e7eef3', W: 720, H: 520, base: { img: 'card_base1.png', x: 50, y: 30, w: 620, h: 460 }, stickers: seq('stamp_', 6, 96), stamp: true, min: 2, text: { x: 360, y: 430, max: 20, size: 28, ph: '카드에 적을 한마디 (20자까지)' }, out: { x: 50, y: 30, w: 620, h: 460 } });
   plays.holly = deco({ title: '호랑가시 묶기', doneLabel: '트리에 달기', doneMsg: '호랑가시 다발을 트리에 달아 뒀어요.', guide: '가지를 눌러 올리고 끌어서 모아요. 마지막에 리본을 올려 묶어요. 세 개 이상 올려 보세요.', bg: '#e7eef3', stickers: seq('ho_', 6, 250).concat([['wr_11.png', 170], ['bow.png', 170]]), min: 3 });
   plays.wish = deco({ title: '소원 쪽지', doneLabel: '접어서 트리에 달기', doneMsg: '소원 쪽지를 접어서 트리에 달았어요. 내일까지는 펼칠 수 없어요.', guide: '아래 칸에 소원을 적어요. 접어서 달면 내일 별을 올릴 때 펼쳐져요.', bg: '#e7eef3', W: 560, H: 420, base: { img: 'tag_1.png', x: 180, y: 10, w: 200, h: 400 }, stickers: seq('stamp_', 6, 44), stamp: true, min: 0, text: { x: 280, y: 220, max: 24, per: 8, size: 21, need: true, hideOut: true, ph: '소원을 적어요 (24자까지)' }, out: { x: 180, y: 10, w: 200, h: 400 }, outSize: 150 });
@@ -1785,7 +1827,7 @@
       const up = () => { drag = null; crankA = null; winding = false; }; can.addEventListener('pointerup', up); can.addEventListener('pointercancel', up);
       // 종이띠가 움직이면 빗살(빨간 선)을 지나는 구멍이 소리를 냄
       function advance(dc) { const prev = off; off += dc; if (dc <= 0) return; for (let c = Math.floor(prev) + 1; c <= Math.floor(off); c++) { const col = ((c % COLS) + COLS) % COLS; let any = false;
-          for (let r = 0; r < 8; r++) if (holes.has(col * 8 + r)) { any = true; tone(NOTES[r] * 2, 1.1, .1, 'sine', NOTES[r] * 4); }
+          for (let r = 0; r < 8; r++) if (holes.has(col * 8 + r)) { any = true; tone(NOTES[r] * 2, 1.1, .035, 'sine', NOTES[r] * 4); }
           if (any) { played++; notes.push({ x: 420 + rnd(-90, 90), y: 300, t: 0 }); if (played >= 8) api.ready(true); } lastCol = col; } }
       // ── 종이띠(악보)
       const CX0 = 70, CW = (800 - CX0 - 14) / VIEW, RH = 26, CY0 = 20, COMB = CX0 + CW * 2;
@@ -1794,7 +1836,7 @@
       strip.addEventListener('pointermove', e => { if (punchMode === null) return; const k = cellAt(e); if (k >= 0) punch(k); });
       strip.addEventListener('pointerup', () => { punchMode = null; }); strip.addEventListener('pointercancel', () => { punchMode = null; });
       strip.addEventListener('wheel', e => { e.preventDefault(); off = Math.max(0, off + Math.sign(e.deltaY || e.deltaX) * .5); }, { passive: false });
-      function punch(k) { if (punchMode && !holes.has(k)) { holes.add(k); tone(NOTES[k % 8] * 2, .5, .08, 'sine', NOTES[k % 8] * 4); tone(90, .03, .05, 'square'); } else if (!punchMode && holes.has(k)) holes.delete(k); }
+      function punch(k) { if (punchMode && !holes.has(k)) { holes.add(k); tone(NOTES[k % 8] * 2, .5, .03, 'sine', NOTES[k % 8] * 4); tone(90, .03, .02, 'square'); } else if (!punchMode && holes.has(k)) holes.delete(k); }
       function drawStrip() { sg.fillStyle = '#3b2c22'; sg.fillRect(0, 0, 800, 268);
         sg.fillStyle = '#f1e6cf'; sg.fillRect(CX0 - 6, CY0 - 10, 800 - CX0, 8 * RH + 20);
         sg.font = '700 19px Gowun Batang,serif'; sg.textAlign = 'center'; sg.textBaseline = 'middle';
@@ -2278,7 +2320,7 @@
       const W = 900, H = 756, can = cv(W, H, 'frcv'), g = can.getContext('2d'), bar = mk('div', 'pbar'); board.append(can, bar);
       const frostI = pic('fr_frost.jpg'), clearI = pic('fr_clear.jpg'), jarI = pic('gf_candle.png');
       const GLASS = { x: 77, y: 0, w: 735, h: 718 };   // 유리창 (창살 포함)
-      const PANES = [[77, 334], [350, 547], [562, 812]].flatMap(([x0, x1]) => [[x0, 0, x1 - x0, 222], [x0, 239, x1 - x0, 718 - 239]]);
+      const PANES = [[77, 334], [350, 547], [562, 812]].flatMap(([x0, x1]) => [[x0, 0, x1 - x0, 222], [x0, 239, x1 - x0, 744 - 239]]);
       const mask = cv(W, H), mx = mask.getContext('2d', { willReadFrequently: true }), comp = cv(W, H), cx2 = comp.getContext('2d');
       let drips = [], down = false, last = null, breath = false, bt = 0, alive = true, t0 = 0, cleared = 0, check = 0, flash = 0, fog = null;
       // 유리에만 끼는 뿌연 김 (나무 창틀·커튼에는 안 낌)
@@ -2558,8 +2600,8 @@
         try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime, d = big ? .55 : rnd(.07, .11), n = Math.ceil(AC.sampleRate * d), bf = AC.createBuffer(1, n, AC.sampleRate), ch = bf.getChannelData(0);
           let b = 0; for (let i = 0; i < n; i++) { const u = i / n, env = big ? Math.sin(u * Math.PI) * (.6 + .4 * Math.random()) * (Math.random() < .015 ? 2.2 : 1) : Math.sin(u * Math.PI); b = b * .82 + (Math.random() * 2 - 1) * .18; ch[i] = b * env; }   // 부드러운(갈색) 잡음
           const src = AC.createBufferSource(), lp = AC.createBiquadFilter(), gn = AC.createGain(); src.buffer = bf; lp.type = 'lowpass'; lp.frequency.setValueAtTime(big ? 1800 : rnd(1100, 1600), t); if (big) lp.frequency.linearRampToValueAtTime(700, t + d); lp.Q.value = .5;
-          gn.gain.value = big ? .5 : .32; src.connect(lp); lp.connect(gn); gn.connect(AC.destination); src.start(t);
-          if (!big && Math.random() < .25) { const o = AC.createOscillator(), g2 = AC.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(rnd(180, 240), t); o.frequency.exponentialRampToValueAtTime(90, t + .06); g2.gain.setValueAtTime(.025, t); g2.gain.exponentialRampToValueAtTime(.0005, t + .07); o.connect(g2); g2.connect(AC.destination); o.start(t); o.stop(t + .08); }   // 즙이 살짝 나는 톡
+          gn.gain.value = (big ? .5 : .32) * VOL; src.connect(lp); lp.connect(gn); gn.connect(AC.destination); src.start(t);
+          if (!big && Math.random() < .25) { const o = AC.createOscillator(), g2 = AC.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(rnd(180, 240), t); o.frequency.exponentialRampToValueAtTime(90, t + .06); g2.gain.setValueAtTime(.025 * VOL, t); g2.gain.exponentialRampToValueAtTime(.0005, t + .07); o.connect(g2); g2.connect(AC.destination); o.start(t); o.stop(t + .08); }   // 즙이 살짝 나는 톡
         } catch (e) { /* 소리 없음 */ } };
       board.className = 'pboard mdshape';
       const W = 800, H = 540, can = cv(W, H, 'mdcv'), g = can.getContext('2d'); board.append(can);
@@ -2869,7 +2911,7 @@
       let alive = true, t0, notes, hits, miss, pops, bob, ended, last, combo, maxC, score;
       function reset() { t0 = performance.now() / 1000 + 1.6; notes = MEL.map(([b, l, f]) => ({ t: b * BEAT, l, f, st: 0 })); hits = 0; miss = 0; combo = 0; maxC = 0; score = 0; pops = []; bob = [0, 0, 0, 0]; ended = false; api.ready(false);
         api.guide('음표가 금색 줄에 닿을 때 아래 악기를 눌러요. 키보드 ← ↓ → 도 돼요.'); }
-      function ring(l, f) { const typ = ['triangle', 'square', 'sine'][l]; tone(f, l === 1 ? .18 : .5, l === 1 ? .05 : .09, typ, f * 2); if (l === 1) scratch(.12, .05, 6000); }
+      function ring(l, f) { const k = [.667, .84, 1][l], fr = f * k; tone(fr, .5, .09, 'sine', fr * 2); }   // 세 악기 모두 맑은 트라이앵글 소리로, 높낮이만 다르게 (왼쪽이 낮고 오른쪽이 높음)
       function press(l) {
         const now = performance.now() / 1000 - t0; let best = null, bd = 1;
         for (const n of notes) if (!n.st && n.l === l) { const d = Math.abs(n.t - now); if (d < bd) { bd = d; best = n; } }

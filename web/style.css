@@ -950,3 +950,9 @@ body.tod-night .vdeco:not(.sky){filter:brightness(.62) saturate(.85) drop-shadow
 #santaLayer .panel-wrap{width:min(820px,100%)}
 .pcflip{width:100%;max-width:600px}
 .layer{overflow-x:hidden}
+/* 내가 만든 장식이 트리 그림과 어울리게: 시간대에 맞춰 밝기·채도를 트리와 같이 낮춤 */
+body.tod-night .sprite>img.orn:not(.gnd):not(.top){filter:brightness(.78) saturate(.72) contrast(.95) drop-shadow(0 0 calc(.6px*var(--s)) rgba(255,240,200,.5))}
+body.tod-eve .sprite>img.orn:not(.gnd):not(.top){filter:brightness(.88) saturate(.82) drop-shadow(0 0 calc(.6px*var(--s)) rgba(255,240,200,.6))}
+body.tod-day .sprite>img.orn:not(.gnd):not(.top){filter:saturate(.88) drop-shadow(0 0 calc(.6px*var(--s)) rgba(255,240,200,.6))}
+
+.treeboard.finale .orn{pointer-events:none}.treeboard.finale .orn.sel{outline:none}
