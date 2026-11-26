@@ -45,6 +45,7 @@
     try { desk ? desk.save(raw) : localStorage.setItem(KEY, raw); } catch (e) { /* 저장 못 해도 화면은 계속 */ }
   }
   let state = load();
+  const NOPLACE = ['carol', 'fight', 'shoot'];   // 만든 물건이 없는 놀이
   window.__paperFlakes = Array.isArray(state.paperFlakes) ? state.paperFlakes : [];
   // 1~24일 칸에서 나오는 놀이·장식은 사람마다 순서가 달라요(처음 한 번 섞어서 저장). 25일은 모두 같아요. 이야기 편지는 날짜 순서 그대로.
   {
@@ -174,6 +175,8 @@
     if (window.__snow && window.__snow.resize) requestAnimationFrame(window.__snow.resize);
   }
   addEventListener('resize', fit);
+  /* 바닥 띠 눈: 마을에 쌓인 눈 양을 따라감 */
+  setInterval(() => { const gs = document.querySelector('#groundBand .gs'); if (gs && window.__snow && window.__snow.avg) { const v = Math.max(0, Math.min(1, (window.__snow.avg() - .08) / .6)); gs.style.opacity = (v * v * (3 - 2 * v)).toFixed(2); } }, 1500);
 
   /* ───────── 달력 칸 ───────── */
   function paintCells() {
@@ -253,6 +256,7 @@
     const t = tod(), amb = { day: .82, eve: .55, night: .36 }[t] + (state.opened[25] ? .08 : 0);
     if (ambient) ambient.style.opacity = V.strip ? { day: 1, eve: .42, night: 0 }[t] : amb.toFixed(2);     // 띠: 낮엔 낮 그림, 저녁엔 반쯤, 밤엔 밤 그림
     if (lampLight) lampLight.style.opacity = t === 'day' ? .3 : 1;
+    { const gd = document.querySelector('#groundBand .gd'); if (gd) gd.style.opacity = V.strip ? { day: 1, eve: .42, night: 0 }[t] : amb.toFixed(2); }   /* 바닥 띠도 마을과 같은 시간대 색 */
     window.__amb = amb;                                  // 눈 쌓인 층의 밝기를 맞추는 데 씀(snow.js)
     for (const k of ['day', 'eve', 'night']) document.body.classList.toggle('tod-' + k, k === t);
   }
@@ -350,8 +354,16 @@
     const board = $('#playBoard'); board.textContent = '';
     open($('#playLayer'), '#btnPlayAgain');
     const inst = P.start(board, { guide: t => { $('#playGuide').textContent = t; }, ready: on => { $('#btnPlayDone').disabled = !on; }, mine: () => Object.keys(state.made).filter(k => +k !== n && state.made[k] && state.made[k].img && V.days[k]).map(k => ({ day: +k, img: state.made[k].img, one: state.made[k].one, play: V.days[k].play, name: (V.items[V.days[k].gift] || {}).name || '' })) });
-    curPlay = { n, P, inst };
+    curPlay = { n, P, inst }; showIntro(d.play, n);
   }
+  // 놀이 소개 카드: 이야기 한 줄 + 하는 법. "시작하기"를 누르면 걷혀요
+  function showIntro(key, n) { const I = (window.INTRO || {})[key]; if (!I) return; const board = $('#playBoard'), c = document.createElement('div'); c.className = 'pintro';
+    const found = Object.keys(state.made || {}).filter(k => +k >= 1 && +k <= 24).length;
+    c.innerHTML = `<div class="pi-card"><div class="pi-day">${n ? `12월 ${n}일 · 별을 찾는 길 <b>${Math.min(24, found + (state.made[n] ? 0 : 1))}/24</b>` : '언제나 놀이'}</div><p class="pi-story"></p><ol class="pi-steps"></ol><button type="button" class="pi-go">시작하기</button></div>`;
+    c.querySelector('.pi-story').textContent = I.s; const ol = c.querySelector('.pi-steps'); I.st.forEach(([ic, t]) => { const li = document.createElement('li'); li.innerHTML = '<span></span><em></em>'; li.firstChild.textContent = ic; li.lastChild.textContent = t; ol.append(li); });
+    c.querySelector('.pi-go').addEventListener('click', () => { c.classList.add('out'); setTimeout(() => c.remove(), 350); }); board.append(c); setTimeout(() => c.querySelector('.pi-go').focus(), 50); }
+  // 안내 문구가 바뀌면 살짝 반짝여 눈에 띄게
+  { const gEl = $('#playGuide'); new MutationObserver(() => { gEl.classList.remove('flash'); void gEl.offsetWidth; gEl.classList.add('flash'); }).observe(gEl, { childList: true, characterData: true, subtree: true }); }
   $('#btnGiftPlay').addEventListener('click', () => openPlay(curDay));
   // 시험장: 25일치 놀이를 날짜와 상관없이 해 보기
   function openTest() {
@@ -371,7 +383,7 @@
     $('#playTitle').textContent = P.title; $('#btnPlayDone').textContent = '다 했어요'; $('#btnPlayDone').disabled = true;
     const board = $('#playBoard'); board.textContent = ''; open($('#playLayer'), '#btnPlayAgain');
     const inst = P.start(board, { guide: t => { $('#playGuide').textContent = t; }, ready: on => { $('#btnPlayDone').disabled = !on; }, mine: () => [] });
-    curPlay = { n: 0, P, inst, free: true };
+    curPlay = { n: 0, P, inst, free: true }; showIntro(key, 0);
   }
   $('#btnFree').addEventListener('click', e => { e.stopPropagation(); const L = $('#freeList'); L.textContent = '';
     FREE.forEach(([k, t, d], i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'trow'; const num = document.createElement('b'); num.textContent = i + 1; const tt = document.createElement('span'); tt.textContent = t; const sm = document.createElement('small'); sm.textContent = d; b.append(num, tt, sm);
@@ -392,6 +404,7 @@
       save(); closeAll(); renderTree(); return openTree(key, true);
     }
     state.made[n] = r; save(); closeAll(); renderTree(n);
+    if (NOPLACE.includes(V.days[n].play)) { toast(P.doneMsg); return; }   // 캐럴·눈싸움·별똥별은 만든 물건이 없어서 트리에 두지 않아요
     if (P === window.__plays.wax && r.img) setTimeout(() => sendSealed(r.img), 700);
     if (n === 24) setTimeout(openSanta, 1200);
     if (!V.days[n].place && posOf(String(n))) return openTree(String(n), true);   // 만든 것은 트리 화면에서 내가 원하는 자리에 직접 놓음
@@ -430,7 +443,7 @@
   const EXTRA_MAX = 8;
   function ornList() {
     const L = [];
-    for (const k of Object.keys(state.orn)) { const d = V.days[k], it = V.items[d.gift]; L.push({ sm: state.made[k] && state.made[k].img && it.sMade || 0, key: k, day: +k, pos: state.orn[k], img: (state.made[k] && state.made[k].img) || A(it.img), name: it.name, gnd: isGnd(it), steam: !!(d.steam && state.made[k]), lit: !!(state.made[k] && state.made[k].lit) }); }
+    for (const k of Object.keys(state.orn)) { const d = V.days[k], it = V.items[d.gift]; if (!d || NOPLACE.includes(d.play)) continue; L.push({ sm: state.made[k] && state.made[k].img && it.sMade || 0, key: k, day: +k, pos: state.orn[k], img: (state.made[k] && state.made[k].img) || A(it.img), name: it.name, gnd: isGnd(it), steam: !!(d.steam && state.made[k]), lit: !!(state.made[k] && state.made[k].lit) }); }
     state.extra.forEach((x, i) => { const it = V.items[V.days[x.day].gift]; L.push({ key: 'x' + i, day: x.day, pos: x, img: x.img, name: it.name, gnd: isGnd(it), extra: true }); });
     (state.knits || []).forEach((x, i) => L.push({ key: 'k' + i, day: 0, pos: x, img: x.img, name: x.name || '내가 뜬 것', gnd: true, extra: true }));   // 뜨개질로 만든 것
     return L.sort((p, q) => p.pos.y - q.pos.y);                                  // 아래쪽에 있는 것이 앞에 보이게
@@ -441,7 +454,7 @@
   state.extra.forEach(o => { const d = V.days[o.day], it = d && V.items[d.gift]; if (isGnd(it)) return; o.x = Math.max(.12, Math.min(.88, o.x)); o.y = Math.max(.08, Math.min(.95, o.y)); });
   // 장식 크기 기준을 키움: 예전 최대(2.2배)가 이제 보통(1). 예전에 저장한 크기는 한 번만 같은 비율로 줄여 맞춤
   // 마을 그림을 양옆으로 넓힘(끝을 자연스럽게): 예전 자리에 있던 것들을 같은 만큼 옮김
-  if ((state.offX || (state.off2 ? 120 : 0)) !== 336) { const O = 336 - (state.offX || (state.off2 ? 120 : 0)), S = state.snowman; if (S) { if (S.bx) S.bx += O; if (S.ball) S.ball.x += O; } (state.snowmen || []).forEach(m => m.bx += O); (state.chars || []).forEach(c => { if (c.x) c.x += O; }); delete state.vsnow; state.offX = 336; state.off2 = 1; }
+  if ((state.offX || (state.off2 ? 120 : 0)) !== 786) { const O = 786 - (state.offX || (state.off2 ? 120 : 0)), S = state.snowman; if (S) { if (S.bx) S.bx += O; if (S.ball) S.ball.x += O; } (state.snowmen || []).forEach(m => m.bx += O); (state.chars || []).forEach(c => { if (c.x) c.x += O; }); delete state.vsnow; state.offX = 786; state.off2 = 1; }
   if (!state.sz2) { const f = (o, g) => { if (o && o.s) o.s = +(o.s / (g ? 1.6 : 2.2)).toFixed(3); }, gOf = day => { const d = V.days[day]; return isGnd(d && V.items[d.gift]); };
     Object.keys(state.orn).forEach(k => f(state.orn[k], gOf(k))); state.extra.forEach(o => f(o, gOf(o.day))); (state.knits || []).forEach(o => f(o, true)); state.sz2 = 1; }   // 바닥 물건은 1.6배만
   function renderTree(popKey) {
@@ -524,7 +537,7 @@
     const T = V.groundSlots.slice(0, 6), top = T.slice(0, 4), bench = T.slice(4), xs = T.map(q => q.x), x0 = Math.min(...xs) - .1, x1 = Math.max(...xs) + .1;
     const nearest = L => L.reduce((a, q) => Math.abs(q.x - p.x) < Math.abs(a.x - p.x) ? q : a, L[0]);
     const by2 = bench[0].y;
-    if (p.x >= x0 && p.x <= x1 && p.y < by2 + .05) { p.y = (p.y > by2 - .03 ? nearest(bench) : nearest(top)).y; if (!p.s) p.s = TABLE_S; }
+    if (p.x >= x0 && p.x <= x1 && p.y < by2 + .05) { const ty = nearest(top).y; p.y = p.y > by2 - .03 ? nearest(bench).y : Math.max(ty - .02, Math.min(ty + .045, p.y)); if (!p.s) p.s = TABLE_S; }   // 탁자 위에서는 놓은 자리 그대로(앞뒤로도 자유롭게), 너무 높이 띄우면 탁자 면에 내려앉음
     else p.y = Math.max(1, Math.min(clampY(9), p.y));   // 눈밭: 앞쪽(아래)으로 더 내려놓을 수 있음
   };
   const drop = () => { if (!grab) return; const key = grab.dataset.key, o = ornList().find(q => q.key === key); if (o && !o.gnd) { o.pos.x = Math.max(.12, Math.min(.88, o.pos.x)); o.pos.y = Math.max(.08, Math.min(.95, o.pos.y)); }   // 트리 장식은 트리 밖 허공에 못 둠: 가장 가까운 가지로
@@ -620,7 +633,7 @@
     const t0 = performance.now(); let last = t0;
     // 오르골 소리로 '고요한 밤' 첫 소절 (작게)
     try { const AC = new (window.AudioContext || window.webkitAudioContext)(), F = { G4: 392, A4: 440, E4: 329.63, D5: 587.33, B4: 493.88, C5: 523.25 }, N2 = [['G4', .9], ['A4', .3], ['G4', .6], ['E4', 1.6], ['G4', .9], ['A4', .3], ['G4', .6], ['E4', 1.6], ['D5', 1.2], ['D5', .6], ['B4', 1.6], ['C5', 1.2], ['C5', .6], ['G4', 1.8]]; let tt = AC.currentTime + 1.2;
-      for (const [n, d] of N2) { for (const [m, v] of [[2, .02], [4, .007], [8.4, .0025]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'sine'; o.frequency.value = F[n] * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0004, tt + 1.8); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + 1.9); } tt += d * .62; } } catch (e) { /* 소리 없음 */ }
+      for (const [n, d] of N2) { for (const [m, v] of [[2, .012], [4, .004], [8.4, .0015]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'sine'; o.frequency.value = F[n] * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0004, tt + 1.8); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + 1.9); } tt += d * .62; } } catch (e) { /* 소리 없음 */ }
     $('#treeHint').textContent = '별이 올라갔어요. 트리에 하나둘 불이 켜져요…';
     (function frame(now) { const T = (now - t0) / 1000, dt = Math.min(.05, (now - last) / 1000); last = now; if (!c.isConnected) return; g.clearRect(0, 0, W, H);
       // 방 불이 살짝 어두워짐 (트리 둘레는 덜 어둡게)
@@ -685,7 +698,7 @@
   function playMusicboxSong() { const k = Object.keys(state.made).find(d => V.days[d] && V.days[d].play === 'musicbox' && state.made[d] && Array.isArray(state.made[d].song) && state.made[d].song.length); if (!k) return false;
     const NOTES = [523, 587, 659, 698, 784, 880, 988, 1047], H = state.made[k].song;
     try { const AC = new (window.AudioContext || window.webkitAudioContext)(); let tt = AC.currentTime + .3; const maxC = Math.max(...H.map(h => Math.floor(h / 8))) + 1;
-      for (let c = 0; c < Math.min(32, maxC); c++) { for (const h of H.filter(x => Math.floor(x / 8) === c)) { const f = NOTES[h % 8]; for (const [m, v] of [[1, .028], [2, .011], [4.2, .004]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'sine'; o.frequency.value = f * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0006, tt + 1.4); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + 1.5); } } tt += .3; } } catch (e) { return false; }
+      for (let c = 0; c < Math.min(32, maxC); c++) { for (const h of H.filter(x => Math.floor(x / 8) === c)) { const f = NOTES[h % 8]; for (const [m, v] of [[1, .017], [2, .007], [4.2, .0025]]) { const o = AC.createOscillator(), gn = AC.createGain(); o.type = 'sine'; o.frequency.value = f * m; gn.gain.setValueAtTime(v, tt); gn.gain.exponentialRampToValueAtTime(.0006, tt + 1.4); o.connect(gn); gn.connect(AC.destination); o.start(tt); o.stop(tt + 1.5); } } tt += .3; } } catch (e) { return false; }
     return true; }
   window.__dbgSanta = { open: openSanta, reply: santaReply, song: playMusicboxSong, fin: () => { const gh = document.querySelector('.fghost'); const st = document.querySelector('.fstar'); st && st.remove(); gh.classList.remove('fghost'); celebrate(gh); } };
   const STREET_PLAYS = { snowman: { title: '눈사람 만들기', start(n) { delete state.made[n]; newSnowman(n); } }, star: { title: '별 올리기', start(n) { openTree(25, false, true); } } };
@@ -697,9 +710,9 @@
     newSnowman(0); toast('거리에 작은 눈덩이가 생겼어요. 잡고 옆으로 굴리면 바닥 눈을 묻히며 커져요.');
   });
   // ── 눈 속 보물찾기(23일): 거리의 눈 더미를 문질러 쓸어 내면 묻혀 있던 물건이 나온다
-  const HUNT = [['lost_1.png', '빨간 장갑', 1116], ['lost_3.png', '낡은 열쇠', 1646], ['lost_4.png', '은방울', 636], ['lost_5.png', '파란 털모자', 1466], ['lost_2.png', '금화', 896]];
+  const HUNT = [['lost_1.png', '빨간 장갑', 1566], ['lost_3.png', '낡은 열쇠', 2096], ['lost_4.png', '은방울', 1086], ['lost_5.png', '파란 털모자', 1916], ['lost_2.png', '금화', 1346]];
   let huntBox = null;
-  STREET_PLAYS.hunt = { title: '눈 속 보물찾기', start(n) { state.hunt = { day: n, rub: [0, 0, 0, 0, 0], got: [0, 0, 0, 0, 0] }; delete state.made[n]; save(); renderHunt(); say(300, 150, '거리에 눈 더미가 다섯 군데 생겼어요. 꾹 누르고 좌우로 문질러 쓸어 보세요.'); } };
+  STREET_PLAYS.hunt = { title: '눈 속 보물찾기', start(n) { state.hunt = { day: n, rub: [0, 0, 0, 0, 0], got: [0, 0, 0, 0, 0] }; delete state.made[n]; save(); renderHunt(); say(750, 150, '거리에 눈 더미가 다섯 군데 생겼어요. 꾹 누르고 좌우로 문질러 쓸어 보세요.'); } };
   function renderHunt() {
     if (huntBox) huntBox.remove(); huntBox = null; const Hs = state.hunt; if (!Hs || !Array.isArray(Hs.rub) || !Array.isArray(Hs.got)) return;
     huntBox = document.createElement('div'); huntBox.className = 'hunt'; scene.appendChild(huntBox); const gy = 207;

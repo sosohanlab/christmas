@@ -3,39 +3,39 @@ window.VILLAGE = {
   season: 2026,
   previewUnlock: true,          // 시제품용: 12월 1일 전에도 1일 칸이 열리고, 설정에 "하루 넘기기"가 보임. 실제 배포 때 false
 
-  // 장면 = 옆으로 긴 거리 그림 한 장(가로 1853 × 세로 224). 아래 x·y는 모두 이 그림 안의 위치(왼쪽 위가 0,0).
+  // 장면 = 옆으로 긴 거리 그림 한 장(가로 2350 × 세로 224). 아래 x·y는 모두 이 그림 안의 위치(왼쪽 위가 0,0).
   // 작업표시줄 위에 화면 왼쪽 끝부터 오른쪽 끝까지 띠처럼 놓임.
-  scene: { w: 1853, h: 224 },
+  scene: { w: 2350, h: 224 },
   strip: true, fitH: .22,                                              // fitH: 띠 높이가 화면 높이의 이 비율을 넘지 않게
-  snowImg: 'village_snow.png', snowDayImg: 'village_snow_day.png', snowGrid: [180, 28],
+  snowImg: 'village_snow.png', snowDayImg: 'village_snow_day.png', snowGrid: [228, 28],
   cutImg: 'village_cut.webp', cutSnowImg: 'village_snow_cut.png', dayImg: 'village_day.jpg', dayCutImg: 'village_day_cut.webp',   // 낮 그림은 밤 그림 위에 겹쳐서 시간에 따라 나타남
   // 하늘을 뺀 그림(집과 눈밭만). 설정의 "하늘"이 '빼기'일 때 씀
 
   // 그림 위에 따로 올린 것들. base는 바닥에서 띄운 높이(224 - y), z는 앞뒤 순서.
   sprites: [
-    { id: 'island', img: 'village.jpg', x: 926.5, base: 0, h: 224, z: 1,
-      smokes: [{ x: 0.220, y: .1 }, { x: 0.335, y: .12 }, { x: 0.428, y: .14 }, { x: 0.736, y: .12 }, { x: 0.874, y: .16 }] },
+    { id: 'island', img: 'village.jpg', x: 1175, base: 0, h: 224, z: 1,
+      smokes: [{ x: 0.365, y: .1 }, { x: 0.456, y: .12 }, { x: 0.529, y: .14 }, { x: 0.772, y: .12 }, { x: 0.881, y: .16 }] },
     // 광장 양옆의 나무들: 집이 끊긴 자리를 가려 줌
-    { id: 'table', img: 'table.png', x: 1156, base: 32, h: 50, z: 424 },                 // 트리 옆 피크닉 탁자. 코코아·촛불·쿠키가 여기 놓임
-    { id: 'tree', img: 'tree_cut.png', x: 1026, base: 38, h: 236, z: 425 },
-    { id: 'mailbox', img: 'mailbox.png', x: 886, base: 30, h: 50, z: 426 },          // 빨간 우체통(탁자와 오른쪽 나무 사이)
+    { id: 'table', img: 'table.png', x: 1556, base: 32, h: 50, z: 424 },                 // 트리 옆 피크닉 탁자. 코코아·촛불·쿠키가 여기 놓임
+    { id: 'tree', img: 'tree_cut.png', x: 1426, base: 38, h: 236, z: 425 },
+    { id: 'mailbox', img: 'mailbox.png', x: 1336, base: 30, h: 50, z: 426 },          // 빨간 우체통(탁자와 오른쪽 나무 사이)
   ],
-  mailbox: { x: 886, y: 194, w: 30, h: 50 },                            // 우체통 누르는 자리(위 그림과 같은 곳)
+  mailbox: { x: 1336, y: 194, w: 30, h: 50 },                            // 우체통 누르는 자리(위 그림과 같은 곳)
   // 트리를 크게 보는 화면: 따로 그린 큰 트리 그림. tx·ty·tw·th = 그 안에서 트리가 차지하는 자리(비율)
   treeView: { img: 'treeview.jpg', imgDay: 'treeview_day.jpg', ratio: 2, tx: 0.3451, ty: 0.0835, tw: 0.331, th: 0.8548 },
 
   // 달력 칸 24개: 숫자가 붙는 창문의 위치(x, y)와 그 창문 불빛 그림(win_01~24.png)이 놓일 자리(lx, ly, lw, lh). 순서대로 1일 … 24일.
   cells: [
-    { x: 1458.3, y: 85.3, lx: 1449.3, ly: 72.7, lw: 18.0, lh: 25.3 }, { x: 1642.3, y: 78.0, lx: 1633.3, ly: 68.0, lw: 18.0, lh: 20.0 }, { x: 1456.3, y: 117.7, lx: 1446.7, ly: 106.7, lw: 19.3, lh: 22.0 },
-    { x: 1344.3, y: 72.7, lx: 1334.7, ly: 60.0, lw: 19.3, lh: 25.3 }, { x: 615.3, y: 115.3, lx: 606.7, ly: 102.0, lw: 17.3, lh: 26.7 }, { x: 1417.0, y: 85.3, lx: 1406.7, ly: 72.7, lw: 20.7, lh: 25.3 },
-    { x: 728.7, y: 106.3, lx: 720.0, ly: 92.0, lw: 17.3, lh: 28.7 }, { x: 1663.3, y: 113.3, lx: 1654.7, ly: 98.7, lw: 17.3, lh: 29.3 }, { x: 1536.3, y: 126.7, lx: 1527.3, ly: 114.7, lw: 18.0, lh: 24.0 },
-    { x: 461.0, y: 115.3, lx: 452.0, ly: 98.7, lw: 18.0, lh: 33.3 }, { x: 597.0, y: 75.0, lx: 589.3, ly: 65.3, lw: 15.3, lh: 19.3 }, { x: 1312.0, y: 117.3, lx: 1303.3, ly: 104.0, lw: 17.3, lh: 26.7 },
-    { x: 667.3, y: 103.3, lx: 658.0, ly: 89.3, lw: 18.7, lh: 28.0 }, { x: 404.7, y: 114.0, lx: 396.7, ly: 97.3, lw: 16.0, lh: 33.3 }, { x: 1716.0, y: 113.3, lx: 1706.7, ly: 98.7, lw: 18.7, lh: 29.3 },
-    { x: 1495.0, y: 85.3, lx: 1485.3, ly: 72.7, lw: 19.3, lh: 25.3 }, { x: 1417.0, y: 116.7, lx: 1406.7, ly: 103.3, lw: 20.7, lh: 26.7 }, { x: 1566.3, y: 127.0, lx: 1557.3, ly: 115.3, lw: 18.0, lh: 23.3 },
-    { x: 547.0, y: 117.3, lx: 538.7, ly: 104.7, lw: 16.7, lh: 25.3 }, { x: 1686.3, y: 109.3, lx: 1676.7, ly: 96.0, lw: 19.3, lh: 26.7 }, { x: 1495.0, y: 121.3, lx: 1486.0, ly: 108.7, lw: 18.0, lh: 25.3 },
-    { x: 522.7, y: 81.7, lx: 512.0, ly: 70.7, lw: 21.3, lh: 22.0 }, { x: 388.3, y: 67.7, lx: 380.7, ly: 56.0, lw: 15.3, lh: 23.3 }, { x: 1373.7, y: 117.7, lx: 1364.7, ly: 102.7, lw: 18.0, lh: 30.0 },
+    { x: 1908.3, y: 85.3, lx: 1899.3, ly: 72.7, lw: 18.0, lh: 25.3 }, { x: 2092.3, y: 78.0, lx: 2083.3, ly: 68.0, lw: 18.0, lh: 20.0 }, { x: 1906.3, y: 117.7, lx: 1896.7, ly: 106.7, lw: 19.3, lh: 22.0 },
+    { x: 1794.3, y: 72.7, lx: 1784.7, ly: 60.0, lw: 19.3, lh: 25.3 }, { x: 1065.3, y: 115.3, lx: 1056.7, ly: 102.0, lw: 17.3, lh: 26.7 }, { x: 1867, y: 85.3, lx: 1856.7, ly: 72.7, lw: 20.7, lh: 25.3 },
+    { x: 1178.7, y: 106.3, lx: 1170, ly: 92.0, lw: 17.3, lh: 28.7 }, { x: 2113.3, y: 113.3, lx: 2104.7, ly: 98.7, lw: 17.3, lh: 29.3 }, { x: 1986.3, y: 126.7, lx: 1977.3, ly: 114.7, lw: 18.0, lh: 24.0 },
+    { x: 911, y: 115.3, lx: 902, ly: 98.7, lw: 18.0, lh: 33.3 }, { x: 1047, y: 75.0, lx: 1039.3, ly: 65.3, lw: 15.3, lh: 19.3 }, { x: 1762, y: 117.3, lx: 1753.3, ly: 104.0, lw: 17.3, lh: 26.7 },
+    { x: 1117.3, y: 103.3, lx: 1108, ly: 89.3, lw: 18.7, lh: 28.0 }, { x: 854.7, y: 114.0, lx: 846.7, ly: 97.3, lw: 16.0, lh: 33.3 }, { x: 2166, y: 113.3, lx: 2156.7, ly: 98.7, lw: 18.7, lh: 29.3 },
+    { x: 1945, y: 85.3, lx: 1935.3, ly: 72.7, lw: 19.3, lh: 25.3 }, { x: 1867, y: 116.7, lx: 1856.7, ly: 103.3, lw: 20.7, lh: 26.7 }, { x: 2016.3, y: 127.0, lx: 2007.3, ly: 115.3, lw: 18.0, lh: 23.3 },
+    { x: 997, y: 117.3, lx: 988.7, ly: 104.7, lw: 16.7, lh: 25.3 }, { x: 2136.3, y: 109.3, lx: 2126.7, ly: 96.0, lw: 19.3, lh: 26.7 }, { x: 1945, y: 121.3, lx: 1936, ly: 108.7, lw: 18.0, lh: 25.3 },
+    { x: 972.7, y: 81.7, lx: 962, ly: 70.7, lw: 21.3, lh: 22.0 }, { x: 838.3, y: 67.7, lx: 830.7, ly: 56.0, lw: 15.3, lh: 23.3 }, { x: 1823.7, y: 117.7, lx: 1814.7, ly: 102.7, lw: 18.0, lh: 30.0 },
   ],
-  star: { x: 1026, y: -64 },     // 25일 칸: 트리 꼭대기
+  star: { x: 1476, y: -64 },     // 25일 칸: 트리 꼭대기
 
   // 트리에 장식이 달리는 기본 자리 24곳(트리 그림 안에서의 비율). 나중에 끌어서 옮길 수 있음.
   slots: [
@@ -54,13 +54,13 @@ window.VILLAGE = {
 
 
   // 태엽 기차가 다니는 길(거리 앞쪽을 왼쪽 끝 ↔ 오른쪽 끝으로 오감). place: 'pond'인 날의 선물이 여기를 달림
-  track: { x1: 826, x2: 1226, y: 212 },
-  roll: { x1: 110, x2: 1745 },   // 눈덩이 굴리기·눈사람 옮기기: 광장 밖 눈 덮인 길까지
+  track: { x1: 1276, x2: 1676, y: 212 },
+  roll: { x1: 110, x2: 2240 },   // 눈덩이 굴리기·눈사람 옮기기: 광장 밖 눈 덮인 길까지
 
   // 고양이가 앉는 자리. 날마다 다음 자리로 옮겨 앉음. f: 0 앉기 / 3 웅크려 자기, k: 크기(멀수록 작게)
   cat: { sheet: 'cat', lines: ['야옹.', '골골골…', '(눈을 가늘게 떠요)', '(꼬리를 한 번 흔들어요)'] },
   catSpots: [
-    { x: 396, y: 214, f: 0, k: 1.4 }, { x: 1636, y: 214, f: 3, k: 1.4 }, { x: 556, y: 214, f: 0, k: 1.4 }, { x: 1516, y: 214, f: 3, k: 1.4 }, { x: 476, y: 214, f: 0, k: 1.4 }, { x: 1696, y: 214, f: 0, k: 1.4 }, { x: 736, y: 214, f: 3, k: 1.4 }, { x: 1316, y: 214, f: 0, k: 1.4 }, { x: 636, y: 214, f: 0, k: 1.4 },
+    { x: 846, y: 214, f: 0, k: 1.4 }, { x: 2086, y: 214, f: 3, k: 1.4 }, { x: 1006, y: 214, f: 0, k: 1.4 }, { x: 1966, y: 214, f: 3, k: 1.4 }, { x: 926, y: 214, f: 0, k: 1.4 }, { x: 2146, y: 214, f: 0, k: 1.4 }, { x: 1186, y: 214, f: 3, k: 1.4 }, { x: 1766, y: 214, f: 0, k: 1.4 }, { x: 1086, y: 214, f: 0, k: 1.4 },
   ],
 
 
@@ -94,30 +94,30 @@ window.VILLAGE = {
 
   // 창문을 열면 마을에 늘어나는 장식. 열쇠 = 그날 놀이 이름. x: 가로 자리, y: 바닥(아랫변) 높이, h: 높이 (장면 기준 픽셀)
   decos: {
-    fight:    { img: 'dc_fort.png',     x: 72,   y: 207, h: 31 },
-    sled:     { img: 'dc_sled.png',     x: 128,  y: 208, h: 42, rot: -8 },
-    snowman:  { img: 'dc_snowman.png',  x: 178,  y: 207, h: 36 },
-    carol:    { img: 'dc_choir.png',    x: 236,  y: 207, h: 35 },
-    wax:      { img: 'dc_letter.png',   x: 292,  y: 207, h: 27 },
-    wreath:   { img: 'dc_wreath.png',   x: 380,  y: 186, h: 17 },
-    cookie:   { img: 'dc_cookies.png',  x: 418,  y: 207, h: 21 },
-    bungeo:   { img: 'dc_cart.png',     x: 470,  y: 207, h: 35 },
-    cake:     { img: 'dc_cake.png',     x: 588,  y: 206, h: 21 },
-    snowflake:{ img: 'dc_flakes.png',   x: 660,  y: 150, h: 14 },
-    puzzle:   { img: 'dc_rack.png',     x: 700,  y: 207, h: 24 },
-    mandarin: { img: 'dc_basket.png',   x: 752,  y: 207, h: 17 },
-    bells:    { img: 'dc_bell.png',     x: 946,  y: 112, h: 17 },
-    shoot:    { img: 'dc_shoot.png',    x: 1250, y: 66,  h: 28, sky: true },
-    wrap:     { img: 'dc_gifts.png',    x: 1268, y: 207, h: 22 },
-    candle:   { img: 'dc_candle.png',   x: 1318, y: 132, h: 23 },
-    musicbox: { img: 'dc_musicbox.png', x: 1372, y: 207, h: 21 },
-    frost:    { img: 'dc_frost.png',    x: 1430, y: 137, h: 20 },
-    globe:    { img: 'dc_globe.png',    x: 1468, y: 207, h: 22 },
-    ginger:   { img: 'dc_ginger.png',   x: 1530, y: 207, h: 27 },
-    cocoa:    { img: 'dc_cocoa.png',    x: 1584, y: 207, h: 14 },
-    bauble:   { img: 'dc_baubles.png',  x: 1640, y: 150, h: 22 },
-    ice:      { img: 'dc_swan.png',     x: 1682, y: 207, h: 27 },
-    pstars:   { img: 'dc_pstar.png',    x: 1730, y: 207, h: 39 },
+    fight:    { img: 'dc_fort.png',     x: 522,   y: 207, h: 31 },
+    sled:     { img: 'dc_sled.png',     x: 578,  y: 208, h: 42, rot: -8 },
+    snowman:  { img: 'dc_snowman.png',  x: 628,  y: 207, h: 36 },
+    carol:    { img: 'dc_choir.png',    x: 686,  y: 207, h: 35 },
+    wax:      { img: 'dc_letter.png',   x: 742,  y: 207, h: 27 },
+    wreath:   { img: 'dc_wreath.png',   x: 830,  y: 186, h: 17 },
+    cookie:   { img: 'dc_cookies.png',  x: 868,  y: 207, h: 21 },
+    bungeo:   { img: 'dc_cart.png',     x: 920,  y: 207, h: 35 },
+    cake:     { img: 'dc_cake.png',     x: 1038,  y: 206, h: 21 },
+    snowflake:{ img: 'dc_flakes.png',   x: 1110,  y: 150, h: 14 },
+    puzzle:   { img: 'dc_rack.png',     x: 1150,  y: 207, h: 24 },
+    mandarin: { img: 'dc_basket.png',   x: 1202,  y: 207, h: 17 },
+    bells:    { img: 'dc_bell.png',     x: 1396,  y: 112, h: 17 },
+    shoot:    { img: 'dc_shoot.png',    x: 1700, y: 66,  h: 28, sky: true },
+    wrap:     { img: 'dc_gifts.png',    x: 1718, y: 207, h: 22 },
+    candle:   { img: 'dc_candle.png',   x: 1768, y: 132, h: 23 },
+    musicbox: { img: 'dc_musicbox.png', x: 1822, y: 207, h: 21 },
+    frost:    { img: 'dc_frost.png',    x: 1880, y: 137, h: 20 },
+    globe:    { img: 'dc_globe.png',    x: 1918, y: 207, h: 22 },
+    ginger:   { img: 'dc_ginger.png',   x: 1980, y: 207, h: 27 },
+    cocoa:    { img: 'dc_cocoa.png',    x: 2034, y: 207, h: 14 },
+    bauble:   { img: 'dc_baubles.png',  x: 2090, y: 150, h: 22 },
+    ice:      { img: 'dc_swan.png',     x: 2132, y: 207, h: 27 },
+    pstars:   { img: 'dc_pstar.png',    x: 2180, y: 207, h: 39 },
   },
 
   // 이야기 편지를 보내는 마을 사람들

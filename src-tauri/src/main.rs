@@ -388,9 +388,9 @@ fn main() {
                             if !want_under {
                                 mode = Mode::Normal;
                             } else if !FRONT.load(Ordering::Relaxed) && !wall::mouse_down() {
-                                // 놀이 창을 다 닫으면 0.3초 뒤 다시 아이콘 밑으로
+                                // 놀이 창을 다 닫으면 2초 뒤 다시 아이콘 밑으로 (연달아 열고 닫을 때 깜빡이지 않게)
                                 quiet += 1;
-                                if quiet > 9 {
+                                if quiet > 60 {
                                     quiet = 0;
                                     mode = Mode::Normal;
                                     retry_at = 0;
