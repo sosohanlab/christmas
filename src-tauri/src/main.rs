@@ -132,42 +132,47 @@ fn show_quiet(w: &WebviewWindow) {
 
 
 // 아이콘 밑에 깔리면 원래 배경화면이 가려져서(검게 보임), 배경화면 그림을 마을 화면 뒤에 직접 깔아 줌
-fn b64(data: &[u8]) -> String {
-    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let mut o = String::with_capacity(data.len() * 4 / 3 + 4);
-    for c in data.chunks(3) {
-        let n = (c[0] as u32) << 16 | (*c.get(1).unwrap_or(&0) as u32) << 8 | *c.get(2).unwrap_or(&0) as u32;
-        o.push(T[(n >> 18) as usize & 63] as char);
-        o.push(T[(n >> 12) as usize & 63] as char);
-        o.push(if c.len() > 1 { T[(n >> 6) as usize & 63] as char } else { '=' });
-        o.push(if c.len() > 2 { T[n as usize & 63] as char } else { '=' });
-    }
-    o
-}
 fn desk_bg_key() -> String {
     let (p, c) = wall::desk_wallpaper();
     let m = std::fs::metadata(&p).and_then(|m| m.modified()).map(|t| format!("{:?}", t)).unwrap_or_default();
     format!("{}|{}|{}", p, c, m)
 }
-fn desk_bg_js() -> String {
-    let (p, c) = wall::desk_wallpaper();
+fn desk_bg_file() -> Option<(Vec<u8>, &'static str)> {
+    let (p, _) = wall::desk_wallpaper();
     let mut path = std::path::PathBuf::from(&p);
     if p.is_empty() || !path.exists() {
         // 스포트라이트 등으로 원본이 없으면 윈도우가 만들어 둔 사본을 씀
         if let Ok(ad) = std::env::var("APPDATA") { path = std::path::PathBuf::from(ad).join("Microsoft\\Windows\\Themes\\TranscodedWallpaper"); }
     }
-    let url = match std::fs::read(&path) {
-        Ok(d) if !d.is_empty() && d.len() < 40_000_000 => {
-            let mime = if d.starts_with(&[0x89, b'P']) { "image/png" } else if d.starts_with(b"BM") { "image/bmp" } else { "image/jpeg" };
-            format!("data:{};base64,{}", mime, b64(&d))
-        }
-        _ => String::new(),
-    };
+    let d = std::fs::read(&path).ok()?;
+    if d.is_empty() { return None; }
+    let mime = if d.starts_with(&[0x89, b'P']) { "image/png" } else if d.starts_with(b"BM") { "image/bmp" } else if d.starts_with(b"RIFF") { "image/webp" } else { "image/jpeg" };
+    Some((d, mime))
+}
+fn desk_log(msg: &str) {
+    // 개발용 기록: 개발 폴더가 있는 PC에서만 남김
+    if let Ok(up) = std::env::var("USERPROFILE") {
+        let dir = std::path::PathBuf::from(up).join("Downloads\\AdventVillage-tauri\\advent");
+        if dir.exists() { let _ = std::fs::write(dir.join("deskbg-log.txt"), msg); }
+    }
+}
+fn desk_bg_js() -> String {
+    let (p, c) = wall::desk_wallpaper();
+    let ok = desk_bg_file().is_some();
+    desk_log(&format!("wallpaper path: {}\ncolor: {}\nfile read ok: {}\n", p, c, ok));
+    let url = if ok { format!("http://deskbg.localhost/w?t={}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0)) } else { String::new() };
     format!("window.__deskBg && window.__deskBg({}, {});", serde_json::to_string(&url).unwrap_or("\"\"".into()), serde_json::to_string(&c).unwrap_or("\"#000\"".into()))
 }
 
 fn main() {
     tauri::Builder::default()
+        // 배경화면 그림을 마을 화면에 건네주는 주소 (http://deskbg.localhost/)
+        .register_uri_scheme_protocol("deskbg", |_ctx, _req| {
+            match desk_bg_file() {
+                Some((d, mime)) => tauri::http::Response::builder().header("Content-Type", mime).header("Cache-Control", "no-store").body(d).unwrap(),
+                None => tauri::http::Response::builder().status(404).body(Vec::new()).unwrap(),
+            }
+        })
         // 두 번 켜면 새로 띄우지 않고 기존 마을을 다시 보이게 함
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             if let Some(w) = app.get_webview_window("main") {
@@ -342,7 +347,7 @@ fn main() {
                                         UNDER.store(true, Ordering::Relaxed);
                                         eval(&w, "window.__adventWall = true;");
                                         let k = format!("{}|{}", desk_bg_key(), wall::other_wallpaper(wk, hwnd));
-                                        if wall::other_wallpaper(wk, hwnd) { bg_key = k; eval(&w, "window.__deskBg && window.__deskBg(null);"); } else if k == bg_key { eval(&w, "window.__deskBg && window.__deskBg('keep');"); } else { bg_key = k; eval(&w, &desk_bg_js()); }
+                                        if wall::other_wallpaper(wk, hwnd) { bg_key = k; desk_log("other wallpaper program found: using it"); eval(&w, "window.__deskBg && window.__deskBg(null);"); } else if k == bg_key { eval(&w, "window.__deskBg && window.__deskBg('keep');"); } else { bg_key = k; eval(&w, &desk_bg_js()); }
                                     }
                                     _ => retry_at = tick + 300, // 못 찾으면 10초 뒤 다시
                                 }

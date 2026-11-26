@@ -1,0 +1,3 @@
+wallpaper path: 
+color: #000000
+file read ok: false

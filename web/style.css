@@ -946,3 +946,7 @@ body.tod-night .vdeco:not(.sky){filter:brightness(.62) saturate(.85) drop-shadow
 #santaCv{width:100%;height:auto;border-radius:12px;display:block;cursor:pointer;touch-action:none}
 .santarow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0}.santarow button{border:1px solid #e3d3bd;background:#fffaf1;border-radius:12px;padding:4px 10px;cursor:pointer;display:flex;align-items:center;gap:6px;font:inherit;color:#5a3a26}.santarow button img{width:42px;height:42px;object-fit:contain}.santarow button:disabled{opacity:.4;cursor:default}
 #santaNote{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #e3d3bd;border-radius:10px;font:inherit;font-family:'Gaegu',var(--font);font-size:16px;background:#fffdf8}
+#letterLayer .panel-wrap{width:min(640px,100%)}
+#santaLayer .panel-wrap{width:min(820px,100%)}
+.pcflip{width:100%;max-width:600px}
+.layer{overflow-x:hidden}

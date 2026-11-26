@@ -2552,6 +2552,15 @@
   plays.mandarin = {
     title: '귤 껍질 모양 까기', doneLabel: '귤 작품 남기기', doneMsg: '귤 껍질을 펼쳐 작품을 만들었어요! 창가 귤 바구니 옆에 놓아 뒀어요.',
     start(board, api) {
+      // 귤 껍질 소리: 손톱으로 껍질을 누르며 지나가는 부드러운 "스윽", 펼칠 때는 껍질이 살살 떨어지는 소리
+      let lastPeel = 0;
+      const peelSnd = big => { const now = performance.now(); if (!big && now - lastPeel < 85) return; lastPeel = now;
+        try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime, d = big ? .55 : rnd(.07, .11), n = Math.ceil(AC.sampleRate * d), bf = AC.createBuffer(1, n, AC.sampleRate), ch = bf.getChannelData(0);
+          let b = 0; for (let i = 0; i < n; i++) { const u = i / n, env = big ? Math.sin(u * Math.PI) * (.6 + .4 * Math.random()) * (Math.random() < .015 ? 2.2 : 1) : Math.sin(u * Math.PI); b = b * .82 + (Math.random() * 2 - 1) * .18; ch[i] = b * env; }   // 부드러운(갈색) 잡음
+          const src = AC.createBufferSource(), lp = AC.createBiquadFilter(), gn = AC.createGain(); src.buffer = bf; lp.type = 'lowpass'; lp.frequency.setValueAtTime(big ? 1800 : rnd(1100, 1600), t); if (big) lp.frequency.linearRampToValueAtTime(700, t + d); lp.Q.value = .5;
+          gn.gain.value = big ? .5 : .32; src.connect(lp); lp.connect(gn); gn.connect(AC.destination); src.start(t);
+          if (!big && Math.random() < .25) { const o = AC.createOscillator(), g2 = AC.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(rnd(180, 240), t); o.frequency.exponentialRampToValueAtTime(90, t + .06); g2.gain.setValueAtTime(.025, t); g2.gain.exponentialRampToValueAtTime(.0005, t + .07); o.connect(g2); g2.connect(AC.destination); o.start(t); o.stop(t + .08); }   // 즙이 살짝 나는 톡
+        } catch (e) { /* 소리 없음 */ } };
       board.className = 'pboard mdshape';
       const W = 800, H = 540, can = cv(W, H, 'mdcv'), g = can.getContext('2d'); board.append(can);
       const fruitI = pic('md_whole.jpg'), fleshI = pic('md_open.jpg');
@@ -2646,7 +2655,7 @@
         if (phase === 'cut') { const q = toW(q0); if (Math.hypot(q.x - CX, q.y - CY) > R + 8) return; stroke = [q]; cuts.push(stroke); if (sh.free) { freeLoop = null; cuts = [stroke]; paintBar(); } return; }
         if (phase === 'done' && pen) { stroke = { c: PENC[penC], p: [[q0.x, q0.y]] }; ink.push(stroke); } });
       can.addEventListener('pointermove', e => { if (!stroke) return; const q0 = at(e, can);
-        if (phase === 'cut') { const q = toW(q0), p0 = stroke[stroke.length - 1]; if (Math.hypot(q.x - p0.x, q.y - p0.y) < 1.2) return; if (Math.hypot(q.x - CX, q.y - CY) > R + 4) return; stroke.push(q); if (stroke.length % 4 === 0) scratch(.05, .035, 3500);
+        if (phase === 'cut') { const q = toW(q0), p0 = stroke[stroke.length - 1]; if (Math.hypot(q.x - p0.x, q.y - p0.y) < 1.2) return; if (Math.hypot(q.x - CX, q.y - CY) > R + 4) return; stroke.push(q); peelSnd(false);
           if (!sh.free) { const before = canOpen(); G.forEach(([x, y], i) => { if (Math.hypot(x - q.x, y - q.y) < 11) cov.add(i); }); if (canOpen() !== before) { paintBar(); if (canOpen()) api.guide('좋아요! \'껍질 펼치기\'를 눌러요.'); } else if (stroke.length % 6 === 0) hint(); } return; }
         if (pen) stroke.p.push([q0.x, q0.y]); });
       const up = () => { if (phase === 'cut' && stroke && sh.free) freeClose(stroke); stroke = null; }; can.addEventListener('pointerup', up); can.addEventListener('pointercancel', up);
@@ -2657,7 +2666,7 @@
         // 각도가 이어지게 (펼칠 때 뒤집힘 방지)
         for (let i = 1; i < freeLoop.length; i++) { let d = freeLoop[i].th - freeLoop[i - 1].th; d = Math.atan2(Math.sin(d), Math.cos(d)); freeLoop[i].th = freeLoop[i - 1].th + d; }
         OL = freeLoop; paintBar(); hint(); }
-      function openIt() { if (!canOpen() || phase !== 'cut') return; phase = 'open'; t0 = last; stroke = null; scratch(.25, .07, 900); paintBar(); api.guide('껍질을 펼치는 중…'); }
+      function openIt() { if (!canOpen() || phase !== 'cut') return; phase = 'open'; t0 = last; stroke = null; peelSnd(true); paintBar(); api.guide('껍질을 펼치는 중…'); }
       /* ── 그리기 ── */
       const path = (P, close = true) => { g.beginPath(); P.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); if (close) g.closePath(); };
       function fruitSkin(clipFn, alpha = 1) { g.save(); g.globalAlpha = alpha; clipFn(); g.clip('evenodd'); if (fruitI.complete) { const k = R / SRC.r; g.drawImage(fruitI, CX - SRC.x * k, CY - SRC.y * k, 640 * k, 640 * k); } else { g.fillStyle = '#ef8a2c'; g.fillRect(CX - R, CY - R, 2 * R, 2 * R); }
