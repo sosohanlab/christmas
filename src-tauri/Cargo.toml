@@ -1,6 +1,6 @@
 [package]
 name = "advent-village"
-version = "0.1.6"
+version = "0.1.7"
 description = "크리스마스 어드벤트 마을"
 edition = "2021"
 

@@ -19,8 +19,42 @@ mod imp {
     };
     use windows::Win32::UI::WindowsAndMessaging::{
         EnumWindows, FindWindowExW, GetAncestor, GA_PARENT, FindWindowW, SendMessageTimeoutW, SetParent, SetWindowPos,
-        HWND_TOP, SMTO_NORMAL, SWP_NOACTIVATE, SWP_NOCOPYBITS, SWP_SHOWWINDOW,
+        HWND_TOP, SMTO_NORMAL, SWP_NOACTIVATE, SWP_NOCOPYBITS, SWP_SHOWWINDOW, SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
+        GetWindowLongPtrW, SetWindowLongPtrW, GWL_STYLE, SystemParametersInfoW, SPI_GETDESKWALLPAPER, SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS,
     };
+    use windows::Win32::Graphics::Gdi::GetSysColor;
+    use windows::Win32::Graphics::Gdi::COLOR_DESKTOP;
+    use std::sync::atomic::{AtomicIsize, Ordering};
+    static SAVED_STYLE: AtomicIsize = AtomicIsize::new(0);
+
+    /// 아이콘 밑에 넣으면 윈도우가 옛날식 제목줄을 그려서, 테두리·제목줄 표시를 떼어 냄 (꺼낼 때 되돌림)
+    fn frame(win: isize, under: bool) {
+        unsafe {
+            let cur = GetWindowLongPtrW(h(win), GWL_STYLE);
+            if under {
+                if SAVED_STYLE.load(Ordering::Relaxed) == 0 { SAVED_STYLE.store(cur, Ordering::Relaxed); }
+                let strip: isize = 0x00C00000 | 0x00040000 | 0x00080000 | 0x00020000 | 0x00010000; // 제목줄·굵은 테두리·창 메뉴·최소/최대 버튼
+                SetWindowLongPtrW(h(win), GWL_STYLE, cur & !strip);
+            } else {
+                let sv = SAVED_STYLE.swap(0, Ordering::Relaxed);
+                if sv != 0 { SetWindowLongPtrW(h(win), GWL_STYLE, sv); }
+            }
+            let _ = SetWindowPos(h(win), None, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+        }
+    }
+
+    /// 지금 윈도우 배경화면 그림 파일 경로와 바탕색 (#rrggbb)
+    pub fn desk_wallpaper() -> (String, String) {
+        unsafe {
+            let mut buf = [0u16; 520];
+            let _ = SystemParametersInfoW(SPI_GETDESKWALLPAPER, buf.len() as u32, Some(buf.as_mut_ptr() as *mut core::ffi::c_void), SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS(0));
+            let n = buf.iter().position(|&c| c == 0).unwrap_or(0);
+            let path = String::from_utf16_lossy(&buf[..n]);
+            let c = GetSysColor(COLOR_DESKTOP);
+            let col = format!("#{:02x}{:02x}{:02x}", c & 0xff, (c >> 8) & 0xff, (c >> 16) & 0xff);
+            (path, col)
+        }
+    }
 
     fn h(v: isize) -> HWND {
         HWND(v as _)
@@ -85,6 +119,7 @@ mod imp {
     pub fn attach(win: isize, worker: isize, x: i32, y: i32, wd: i32, ht: i32) -> bool {
         unsafe {
             // 돌려주는 값(이전 부모)은 보통 창이면 비어 있을 수 있어서 결과는 보지 않음
+            frame(win, true);
             let _ = SetParent(h(win), Some(h(worker)));
             let mut pts = [POINT { x, y }];
             MapWindowPoints(None, Some(h(worker)), &mut pts);
@@ -97,7 +132,25 @@ mod imp {
     pub fn detach(win: isize, x: i32, y: i32, wd: i32, ht: i32) {
         unsafe {
             let _ = SetParent(h(win), None);
+            frame(win, false);
             let _ = SetWindowPos(h(win), Some(HWND_TOP), x, y, wd, ht, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+        }
+    }
+
+    /// 그림 자리에 마을 말고 다른 창(월페이퍼 엔진 등)이 있는지: 있으면 그 배경이 보이게 둠
+    pub fn other_wallpaper(worker: isize, win: isize) -> bool {
+        unsafe {
+            let mut cur: Option<HWND> = None;
+            for _ in 0..32 {
+                match FindWindowExW(Some(h(worker)), cur, PCWSTR::null(), PCWSTR::null()) {
+                    Ok(c) if !c.is_invalid() => {
+                        if raw(c) != win && windows::Win32::UI::WindowsAndMessaging::IsWindowVisible(c).as_bool() { return true; }
+                        cur = Some(c);
+                    }
+                    _ => break,
+                }
+            }
+            false
         }
     }
 
@@ -193,6 +246,12 @@ mod imp {
         0
     }
     pub fn mouse_down() -> bool {
+        false
+    }
+    pub fn desk_wallpaper() -> (String, String) {
+        (String::new(), "#000000".into())
+    }
+    pub fn other_wallpaper(_: isize, _: isize) -> bool {
         false
     }
     pub struct Icons;

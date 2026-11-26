@@ -130,6 +130,42 @@ fn show_quiet(w: &WebviewWindow) {
     let _ = w.set_ignore_cursor_events(IGNORING.load(Ordering::Relaxed));
 }
 
+
+// 아이콘 밑에 깔리면 원래 배경화면이 가려져서(검게 보임), 배경화면 그림을 마을 화면 뒤에 직접 깔아 줌
+fn b64(data: &[u8]) -> String {
+    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut o = String::with_capacity(data.len() * 4 / 3 + 4);
+    for c in data.chunks(3) {
+        let n = (c[0] as u32) << 16 | (*c.get(1).unwrap_or(&0) as u32) << 8 | *c.get(2).unwrap_or(&0) as u32;
+        o.push(T[(n >> 18) as usize & 63] as char);
+        o.push(T[(n >> 12) as usize & 63] as char);
+        o.push(if c.len() > 1 { T[(n >> 6) as usize & 63] as char } else { '=' });
+        o.push(if c.len() > 2 { T[n as usize & 63] as char } else { '=' });
+    }
+    o
+}
+fn desk_bg_key() -> String {
+    let (p, c) = wall::desk_wallpaper();
+    let m = std::fs::metadata(&p).and_then(|m| m.modified()).map(|t| format!("{:?}", t)).unwrap_or_default();
+    format!("{}|{}|{}", p, c, m)
+}
+fn desk_bg_js() -> String {
+    let (p, c) = wall::desk_wallpaper();
+    let mut path = std::path::PathBuf::from(&p);
+    if p.is_empty() || !path.exists() {
+        // 스포트라이트 등으로 원본이 없으면 윈도우가 만들어 둔 사본을 씀
+        if let Ok(ad) = std::env::var("APPDATA") { path = std::path::PathBuf::from(ad).join("Microsoft\\Windows\\Themes\\TranscodedWallpaper"); }
+    }
+    let url = match std::fs::read(&path) {
+        Ok(d) if !d.is_empty() && d.len() < 40_000_000 => {
+            let mime = if d.starts_with(&[0x89, b'P']) { "image/png" } else if d.starts_with(b"BM") { "image/bmp" } else { "image/jpeg" };
+            format!("data:{};base64,{}", mime, b64(&d))
+        }
+        _ => String::new(),
+    };
+    format!("window.__deskBg && window.__deskBg({}, {});", serde_json::to_string(&url).unwrap_or("\"\"".into()), serde_json::to_string(&c).unwrap_or("\"#000\"".into()))
+}
+
 fn main() {
     tauri::Builder::default()
         // 두 번 켜면 새로 띄우지 않고 기존 마을을 다시 보이게 함
@@ -276,6 +312,7 @@ fn main() {
                 let mut icon_rects: Vec<(i32, i32, i32, i32)> = Vec::new();
                 let mut rect: Option<(i32, i32, i32, i32)> = None;
                 let mut placed = (0, 0, 0, 0);
+                let mut bg_key = String::new();
                 let mut last = (f64::NAN, f64::NAN);
                 let (mut tick, mut retry_at, mut quiet): (u32, u32, u32) = (0, 0, 0);
                 let (mut was_down, mut down_ok, mut was_inside) = (false, false, false);
@@ -304,6 +341,8 @@ fn main() {
                                         icon_rects = icons.rects(lv);
                                         UNDER.store(true, Ordering::Relaxed);
                                         eval(&w, "window.__adventWall = true;");
+                                        let k = format!("{}|{}", desk_bg_key(), wall::other_wallpaper(wk, hwnd));
+                                        if wall::other_wallpaper(wk, hwnd) { bg_key = k; eval(&w, "window.__deskBg && window.__deskBg(null);"); } else if k == bg_key { eval(&w, "window.__deskBg && window.__deskBg('keep');"); } else { bg_key = k; eval(&w, &desk_bg_js()); }
                                     }
                                     _ => retry_at = tick + 300, // 못 찾으면 10초 뒤 다시
                                 }
@@ -316,7 +355,7 @@ fn main() {
                             if !want_under {
                                 wall::detach(hwnd, rx0, ry0, rw, rh);
                                 mode = Mode::Normal;
-                                eval(&w, "window.__adventWall = false;");
+                                eval(&w, "window.__adventWall = false; window.__deskBg && window.__deskBg(null);");
                                 let _ = w.set_ignore_cursor_events(IGNORING.load(Ordering::Relaxed));
                             } else if tick % 30 == 0 {
                                 // 화면 크기·작업표시줄이 바뀌었거나, 윈도우가 마을을 빼냈을 때만 다시 넣음 (매번 넣으면 깜빡거림)
@@ -331,6 +370,12 @@ fn main() {
                                 }
                                 if tick % 90 == 0 {
                                     icon_rects = icons.rects(lv);
+                                }
+                                if tick % 300 == 0 {
+                                    // 배경화면을 바꿨거나 슬라이드쇼로 넘어갔으면 다시 깔기
+                                    let other = wall::other_wallpaper(wk, hwnd);
+                                    let k = format!("{}|{}", desk_bg_key(), other);
+                                    if k != bg_key { bg_key = k; eval(&w, if other { "window.__deskBg && window.__deskBg(null);".to_string() } else { desk_bg_js() }.as_str()); }
                                 }
                             }
                         }
@@ -380,7 +425,7 @@ fn main() {
                             mode = Mode::Lifted;
                             quiet = 0;
                             let _ = w.set_ignore_cursor_events(IGNORING.load(Ordering::Relaxed));
-                            eval(&w, "window.__adventWall = false;");
+                            eval(&w, "window.__adventWall = false; window.__deskBg && window.__deskBg(null);");
                         }
                         was_down = down;
                     } else {

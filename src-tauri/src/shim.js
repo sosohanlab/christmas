@@ -16,6 +16,14 @@
   // 그래서 프로그램이 마우스 위치를 알려 주면, 그걸로 움직임을 대신 만들어 그림 위에 올라왔는지 확인해요.
   // 아이콘 밑에 깔려 있을 때(__adventWall)는 늘 이 방법으로 받아요.
   window.__adventWall = false;
+  // 아이콘 밑에 깔렸을 때: 원래 배경화면이 가려지므로 같은 그림을 마을 뒤에 깔아요 (null이면 걷기, 'keep'이면 전에 받은 그림 다시 보이기)
+  let deskEl = null, deskUrl = '', deskCol = '#000';
+  window.__deskBg = (url, col) => {
+    if (!deskEl) { deskEl = document.createElement('div'); deskEl.id = 'deskBg'; deskEl.style.cssText = 'position:fixed;left:0;top:0;z-index:-1;pointer-events:none;background-position:center;background-size:cover;background-repeat:no-repeat;display:none'; (document.body || document.documentElement).prepend(deskEl); }
+    if (url === null) { deskEl.style.display = 'none'; return; }
+    if (url !== 'keep') { deskUrl = url || ''; deskCol = col || '#000'; deskEl.style.backgroundImage = deskUrl ? 'url("' + deskUrl + '")' : 'none'; deskEl.style.backgroundColor = deskCol; }
+    deskEl.style.width = screen.width + 'px'; deskEl.style.height = screen.height + 'px'; deskEl.style.display = 'block';
+  };
   // 이렇게 대신 만든 움직임에는 브라우저의 :hover(마우스 올리면 바뀌는 모양)가 안 생겨요.
   // 그래서 :hover 규칙을 .hov 이름표로 똑같이 하나 더 만들고, 마우스 아래 요소에 이름표를 붙여요.
   let hovSet = new Set();
